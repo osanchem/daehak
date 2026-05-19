@@ -35,6 +35,14 @@
     .contact { margin-top: 4px; }
     .contact a { color: var(--apple-blue); font-weight: 750; text-decoration: none; }
     .contact a:hover { text-decoration: underline; }
+    .bookmark-row { margin-top: 8px; }
+    .bookmark-button {
+      border-color: rgba(0,113,227,0.22);
+      color: var(--apple-blue);
+      background: #fff;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+    }
     .privacy-note {
       display: inline-block;
       margin-top: 8px;
@@ -232,6 +240,7 @@
         <div class="caption" id="metadata"></div>
         <div class="caption contact">문의: <a href="mailto:jinhak082@gmail.com">jinhak082@gmail.com</a></div>
         <div class="caption">update: 2026.05.19</div>
+        <div class="bookmark-row"><button class="bookmark-button" id="bookmarkButton" type="button">즐겨찾기 추가하기</button></div>
         <div class="privacy-note">이 사이트에서 활용한 파일과 검색 내용은 절대 서버에 저장되지 않습니다.</div>
       </div>
       <nav class="toolbar" id="yearButtons" aria-label="학년 필터"></nav>
@@ -481,8 +490,14 @@
       });
       $('csvButton').addEventListener('click', downloadCsv);
       $('htmlDownloadButton').addEventListener('click', downloadCurrentHtml);
+      $('bookmarkButton').addEventListener('click', showBookmarkGuide);
       $('studentSelect').addEventListener('change', renderStudent);
       $('excelInput').addEventListener('change', handleExcelUpload);
+    }
+
+    function showBookmarkGuide() {
+      const shortcut = /Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'Command+D' : 'Ctrl+D';
+      window.alert(`브라우저 보안 정책상 자동 추가는 제한됩니다.\n주소창에서 이 페이지를 연 뒤 ${shortcut}를 눌러 즐겨찾기에 추가해주세요.`);
     }
 
     function renderCheckPanel(id, values, selectedSet, fallbackLabel) {
