@@ -3,1304 +3,1531 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>진학 결과 조회기</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <title>오산고등학교 교육과정 선택 프로그램</title>
   <style>
     :root {
-      --apple-bg: #f5f5f7;
-      --apple-surface: rgba(255,255,255,0.86);
-      --apple-surface-strong: #ffffff;
-      --apple-text: #1d1d1f;
-      --apple-muted: #6e6e73;
-      --apple-line: rgba(0,0,0,0.10);
-      --apple-blue: #0071e3;
-      --apple-green: #248a3d;
-      --apple-red: #d70015;
-      --apple-shadow: 0 10px 30px rgba(0,0,0,0.07);
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #202636;
+      --muted: #697184;
+      --line: #dfe4ee;
+      --ok: #0f8a5f;
+      --warn: #b7791f;
+      --bad: #c92a2a;
+      --brand: #2457c5;
+      --shadow: 0 14px 30px rgba(32, 38, 54, .08);
+      --radius: 8px;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      background: linear-gradient(180deg, #fbfbfd 0%, var(--apple-bg) 42%, #ffffff 100%);
-      color: var(--apple-text);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
       letter-spacing: 0;
     }
-    .page { max-width: 1680px; margin: 0 auto; padding: 32px 24px 64px; }
-    header { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
-    h1 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; margin: 0 0 8px; font-weight: 850; }
-    h2, h3 { margin: 0; font-weight: 800; }
-    .caption { color: var(--apple-muted); font-size: 0.95rem; }
-    .contact { margin-top: 4px; }
-    .contact a { color: var(--apple-blue); font-weight: 750; text-decoration: none; }
-    .contact a:hover { text-decoration: underline; }
-    .bookmark-row { margin-top: 8px; }
-    .bookmark-button {
-      border-color: rgba(0,113,227,0.22);
-      color: var(--apple-blue);
-      background: #fff;
-      padding: 8px 12px;
-      font-size: 0.88rem;
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .94);
+      backdrop-filter: blur(12px);
     }
-    .privacy-note {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 7px 10px;
-      border: 1px solid rgba(36,138,61,0.22);
-      border-radius: 999px;
-      background: rgba(36,138,61,0.08);
-      color: var(--apple-green);
-      font-size: 0.86rem;
-      font-weight: 750;
+
+    .header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    button, select, input {
-      font: inherit;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.16);
-      background: rgba(255,255,255,0.94);
-      color: var(--apple-text);
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
     }
-    button { cursor: pointer; font-weight: 750; }
-    .secondary {
-      border-color: rgba(0,113,227,0.22);
-      color: var(--apple-blue);
-      background: #fff;
-      padding: 10px 14px;
-    }
-    .pill {
-      border-radius: 999px;
-      padding: 8px 13px;
-      border-color: rgba(0,113,227,0.18);
-      color: var(--apple-blue);
-      background: rgba(255,255,255,0.82);
-    }
-    .pill.active, .primary {
-      background: var(--apple-blue);
-      color: #fff;
-      box-shadow: 0 6px 18px rgba(0,113,227,0.22);
-    }
-    .section, details {
-      background: var(--apple-surface);
-      border: 1px solid var(--apple-line);
-      border-radius: 16px;
-      box-shadow: var(--apple-shadow);
-      backdrop-filter: blur(18px);
-      padding: 18px;
-      margin: 16px 0;
-    }
-    summary { cursor: pointer; font-size: 1.16rem; font-weight: 820; }
-    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
-    .metric {
-      background: var(--apple-surface-strong);
-      border: 1px solid var(--apple-line);
-      border-radius: 12px;
-      padding: 16px 18px;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       min-width: 0;
     }
-    .metric-label { color: var(--apple-muted); font-size: 0.82rem; margin-bottom: 6px; }
-    .metric-value { font-size: 1.55rem; line-height: 1.1; font-weight: 850; overflow-wrap: anywhere; }
-    .grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr); gap: 24px; align-items: start; }
-    .student-panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
-    .controls { display: grid; grid-template-columns: minmax(160px, 0.9fr) minmax(180px, 1fr) minmax(220px, 1.3fr); gap: 12px; margin: 16px 0; }
-    label { display: grid; gap: 6px; color: var(--apple-muted); font-size: 0.86rem; font-weight: 750; min-width: 0; }
-    select, input { width: 100%; padding: 10px 11px; min-width: 0; }
-    select:focus, input:focus, button:focus { outline: 3px solid rgba(0,113,227,0.16); border-color: var(--apple-blue); }
-    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 14px 0; }
-    .upload-panel {
-      display: grid;
-      grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.8fr);
-      gap: 16px;
-      align-items: center;
-      background: var(--apple-surface);
-      border: 1px solid var(--apple-line);
-      border-radius: 14px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-      padding: 12px;
-      margin: 10px 0 18px;
+
+    .school-logo {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      border-radius: 6px;
+      object-fit: contain;
+      display: block;
     }
-    body.empty-mode .upload-panel {
-      max-width: 980px;
-      margin: 28px auto 18px;
-      padding: 22px;
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    select, button, .file-button {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    select {
+      padding: 0 34px 0 12px;
+      min-width: 150px;
+    }
+
+    button, .file-button {
+      padding: 0 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .file-button input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    button.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 16px 20px 28px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
       align-items: start;
     }
-    body.empty-mode .analysis-panel { display: none; }
-    .upload-copy { min-width: 0; }
-    .upload-title { font-size: 1.12rem; font-weight: 850; color: var(--apple-text); margin-bottom: 8px; }
-    .upload-steps { margin: 10px 0 14px; padding-left: 1.25rem; color: var(--apple-muted); line-height: 1.65; font-size: 0.94rem; }
-    .local-download { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
-    .local-download span { color: var(--apple-muted); font-size: 0.9rem; line-height: 1.45; }
-    .file-picker { min-width: 0; }
-    .upload-panel input[type="file"] { padding: 8px; background: #fff; }
-    .upload-status { color: var(--apple-muted); font-size: 0.86rem; text-align: right; overflow-wrap: anywhere; }
-    .chart-box { height: 360px; min-height: 0; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 14px; overflow: hidden; }
-    .chart-box canvas { display: block; width: 100% !important; height: 300px !important; max-height: 300px; }
-    .chart-box h3, .panel-title { font-size: 1rem; margin-bottom: 10px; }
-    .filter-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
-    .check-panel { border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: rgba(255,255,255,0.7); padding: 10px; max-height: 130px; overflow: auto; }
-    .check-panel label {
-      display: flex !important;
-      flex-direction: row;
-      align-items: flex-start;
-      justify-content: flex-start;
-      gap: 8px;
-      width: 100%;
-      color: var(--apple-text);
-      font-size: 0.84rem;
-      font-weight: 600;
-      line-height: 1.35;
-      margin: 5px 0;
+
+    .notice {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid #f0d58a;
+      border-radius: var(--radius);
+      background: #fff8df;
+      color: #6f4e07;
+      font-size: 13px;
+      line-height: 1.5;
     }
-    .check-panel input[type="checkbox"] {
-      width: auto;
-      min-width: 16px;
-      height: 16px;
-      flex: 0 0 auto;
-      margin: 2px 0 0 0;
-      padding: 0;
-    }
-    .check-panel span { flex: 1 1 auto; min-width: 0; text-align: left; overflow-wrap: anywhere; }
-    .table-actions { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-top: 18px; }
-    .table-wrap { border: 1px solid var(--apple-line); border-radius: 12px; overflow: auto; max-height: 460px; background: #fff; }
-    table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 0.9rem; }
-    th, td { padding: 10px 11px; border-bottom: 1px solid rgba(0,0,0,0.07); text-align: left; vertical-align: top; }
-    th { position: sticky; top: 0; background: #fbfbfd; z-index: 1; cursor: pointer; white-space: nowrap; }
-    td { overflow-wrap: anywhere; }
-    .student-summary {
-      border: 1px solid var(--apple-line);
-      border-radius: 14px;
-      padding: 16px;
-      background: var(--apple-surface);
-      margin: 16px 0 18px;
-      box-shadow: var(--apple-shadow);
-    }
-    .student-summary-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 1.18rem; font-weight: 850; margin-bottom: 12px; }
-    .year-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-    .year-badge { border-radius: 999px; padding: 3px 9px; background: rgba(0,113,227,0.10); color: var(--apple-blue); font-size: 0.76rem; font-weight: 800; white-space: nowrap; }
-    .student-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 12px; }
-    .student-kpi { border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; background: rgba(255,255,255,0.76); padding: 8px 9px; min-width: 0; }
-    .student-kpi-label { color: var(--apple-muted); font-size: 0.68rem; margin-bottom: 2px; white-space: nowrap; }
-    .student-kpi-value { font-size: 1rem; font-weight: 850; line-height: 1.15; overflow-wrap: anywhere; }
-    .summary-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
-    .summary-section { border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: rgba(255,255,255,0.52); padding: 10px; min-width: 0; overflow: hidden; }
-    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-    .summary-tile { border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px 9px; background: rgba(255,255,255,0.78); min-width: 0; }
-    .summary-label { color: var(--apple-muted); font-size: 0.69rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .summary-value { font-size: 0.95rem; font-weight: 800; line-height: 1.18; overflow-wrap: anywhere; word-break: keep-all; }
-    .suneung-grid { display: grid; grid-template-columns: 1fr; gap: 5px; margin-top: 8px; max-height: 150px; overflow: auto; padding-right: 2px; }
-    .suneung-row { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; align-items: start; border: 1px solid rgba(0,0,0,0.07); border-radius: 9px; background: rgba(255,255,255,0.78); padding: 7px 8px; min-width: 0; }
-    .suneung-label { color: var(--apple-muted); font-size: 0.68rem; font-weight: 800; white-space: nowrap; }
-    .suneung-value { font-size: 0.78rem; font-weight: 760; line-height: 1.28; min-width: 0; overflow-wrap: anywhere; word-break: keep-all; }
-    .score-section-title { color: var(--apple-muted); font-size: 0.78rem; font-weight: 700; margin: 0; }
-    .application-card {
-      border: 1px solid var(--apple-line);
-      border-left-width: 5px;
-      border-radius: 12px;
-      padding: 15px 17px;
-      background: var(--apple-surface-strong);
+
+    details {
       margin-bottom: 10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.045);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
-    .application-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 1.02rem; font-weight: 800; margin-bottom: 6px; min-width: 0; }
-    .application-title-main { min-width: 0; overflow-wrap: anywhere; word-break: keep-all; line-height: 1.35; }
-    .application-meta { color: var(--apple-muted); font-size: 0.9rem; line-height: 1.55; }
-    .application-year { display: inline-block; border-radius: 999px; padding: 2px 8px; margin-right: 6px; background: rgba(0,113,227,0.10); color: var(--apple-blue); font-size: 0.74rem; font-weight: 850; vertical-align: 1px; }
-    .application-list-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 14px 0 10px; }
-    .application-list-count { color: var(--apple-muted); font-size: 0.84rem; font-weight: 700; }
-    .badge { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 0.78rem; font-weight: 700; margin-left: 6px; white-space: nowrap; }
-    .application-title > .badge { flex: 0 0 auto; margin-left: 0; margin-top: 1px; }
-    .badge-pass { background: rgba(36,138,61,0.12); color: var(--apple-green); }
-    .badge-fail { background: rgba(215,0,21,0.10); color: var(--apple-red); }
-    .badge-other { background: rgba(110,110,115,0.12); color: var(--apple-muted); }
-    .empty { color: var(--apple-muted); padding: 18px 0; }
-    @media (max-width: 980px) {
-      .page { padding: 24px 14px 48px; }
-      header, .grid, .charts, .controls, .filter-row, .upload-panel { grid-template-columns: 1fr; display: grid; }
-      header { align-items: stretch; }
-      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .student-panel { position: static; max-height: none; overflow: visible; }
-      .toolbar { justify-content: flex-start; }
-      .upload-status { text-align: left; }
-      .local-download { align-items: flex-start; }
+
+    summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 50px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
     }
-    @media (max-width: 560px) {
-      .metrics, .summary-sections, .summary-grid, .student-kpis { grid-template-columns: 1fr; }
-      table { min-width: 720px; }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "⌄";
+      font-size: 20px;
+      color: var(--muted);
+      transform: rotate(0deg);
+      transition: transform .18s ease;
+    }
+
+    details[open] summary::after { transform: rotate(180deg); }
+
+    .grade-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .section {
+      padding: 0 14px 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .group {
+      padding-top: 12px;
+    }
+
+    .group-panel {
+      margin-top: 12px;
+      margin-bottom: 0;
+      box-shadow: none;
+    }
+
+    .group-panel.group {
+      padding-top: 0;
+    }
+
+    .group-panel summary {
+      min-height: 50px;
+      padding: 0 14px;
+    }
+
+    .group-panel .course-grid {
+      padding: 0 14px 14px;
+    }
+
+    .group-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      align-items: end;
+    }
+
+    .group-title {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .group-rule {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+      min-width: 64px;
+    }
+
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 6px;
+    }
+
+    .course {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 7px;
+      min-height: 62px;
+      padding: 8px 9px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--area, #8a94a8);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .course.required {
+      background: #f3f5f9;
+      color: #596273;
+    }
+
+    .course.limit-locked {
+      opacity: .48;
+    }
+
+    .course input {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
+      accent-color: var(--brand);
+    }
+
+    .course-name {
+      font-weight: 800;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 5px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #eef2f8;
+      color: #4f5b70;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    aside {
+      position: sticky;
+      top: 92px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .side-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #111827;
+      color: #fff;
+    }
+
+    .total-number {
+      margin-top: 6px;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .side-body { padding: 12px 14px; }
+
+    .priority-status {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .priority-card {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f8fafc;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .priority-card.ok {
+      border-color: rgba(15, 138, 95, .32);
+      background: #effaf5;
+    }
+
+    .priority-card.bad {
+      border-color: rgba(201, 42, 42, .32);
+      background: #fff1f1;
+    }
+
+    .priority-card .status {
+      font-size: 16px;
+      line-height: 1.1;
+    }
+
+    .priority-card strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .priority-card small {
+      color: var(--muted);
+    }
+
+    .panel-title {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #394154;
+    }
+
+    .area-row {
+      margin-bottom: 8px;
+    }
+
+    .area-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .area-name {
+      min-width: 0;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .area-score {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      gap: 4px;
+      align-items: center;
+      justify-content: end;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .score-piece {
+      padding: 2px 5px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .score-label {
+      margin-right: 2px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .score-value {
+      color: var(--ok);
+      font-weight: 950;
+    }
+
+    .score-note {
+      display: block;
+      margin-top: 1px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .area-row.insufficient .score-value.actual {
+      color: var(--bad);
+    }
+
+    .area-row.insufficient .score-piece.required {
+      border-color: #f0b4b4;
+      background: #fff5f5;
+    }
+
+    .bar {
+      height: 6px;
+      border-radius: 999px;
+      background: #e9edf5;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: var(--bar, var(--brand));
+      transition: width .18s ease;
+    }
+
+    .status { font-weight: 900; }
+
+    .empty {
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    @media (max-width: 860px) {
+      .header-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .controls { justify-content: flex-start; }
+
+      .shell {
+        display: block;
+        padding: 16px 14px 190px;
+      }
+
+      aside {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        top: auto;
+        z-index: 30;
+        max-height: 170px;
+        overflow: auto;
+      }
+
+      .side-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+      }
+
+      .total-number { font-size: 26px; margin: 0; }
+      .side-body { padding: 12px 14px; }
+      .course-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <script type="application/json" id="data-json">{"rows":[],"years":[],"univs":[],"students":[],"grade_keys":[],"suneung_items":{},"match_keys":{},"metadata":{"result_file":"","row_count":0,"created_at":""},"colors":{"pass":"#248A3D","fail":"#D70015","other":"#6E6E73"}}</script>
-  <main class="page">
-    <header>
-      <div>
-        <h1>진학 결과 조회기</h1>
-        <div class="caption" id="metadata"></div>
-        <div class="caption contact">문의: <a href="mailto:jinhak082@gmail.com">jinhak082@gmail.com</a></div>
-        <div class="caption">update: 2026.05.19</div>
-        <div class="bookmark-row"><button class="bookmark-button" id="bookmarkButton" type="button">즐겨찾기 추가하기</button></div>
-        <div class="privacy-note">이 사이트에서 활용한 파일과 검색 내용은 절대 서버에 저장되지 않습니다.</div>
-      </div>
-      <nav class="toolbar" id="yearButtons" aria-label="학년 필터"></nav>
-    </header>
-
-    <section class="upload-panel" aria-label="엑셀 파일 시각화">
-      <div class="upload-copy">
-        <div class="upload-title">엑셀 파일을 넣어 진학 결과를 시각화합니다.</div>
-        <ol class="upload-steps">
-          <li>상단의 파일 선택에서 진학결과 엑셀 파일을 선택합니다.</li>
-          <li>여러 파일을 한 번에 선택할 수 있습니다.</li>
-          <li>파일을 넣으면 차트, 검색, 학생별 조회 기능이 자동으로 열립니다.</li>
-        </ol>
-        <div class="local-download">
-          <span>그럼에도 로컬 사용을 원하시면 HTML파일 다운로드를 눌러주세요.</span>
-          <button class="secondary" id="htmlDownloadButton" type="button">HTML파일 다운로드</button>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="school-logo" viewBox="0 0 512 512" role="img" aria-label="오산고등학교 교표">
+          <rect width="512" height="512" fill="#fff"/>
+          <rect width="512" height="158" fill="#0a05ff"/>
+          <rect y="158" width="512" height="181" fill="#f70606"/>
+          <rect y="339" width="512" height="173" fill="#fff600"/>
+          <rect y="158" width="512" height="12" fill="#fff"/>
+          <rect y="329" width="512" height="14" fill="#fff"/>
+          <path d="M256 0C214 86 134 147 0 170h80c32 68 38 167 28 286 44-21 98-32 148-32s104 11 148 32c-10-119-4-218 28-286h80C378 147 298 86 256 0Z" fill="#fff" stroke="#cfcfcf" stroke-width="3"/>
+          <circle cx="256" cy="257" r="130" fill="#f70606" stroke="#a80000" stroke-width="3"/>
+          <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="33">
+            <path d="M256 176v66"/>
+            <path d="M171 225v90h170v-90"/>
+            <path d="M171 315l85-83 85 83"/>
+          </g>
+          <path d="M256 263l40 43h-80z" fill="#f70606"/>
+        </svg>
+        <div>
+          <h1>오산고등학교 교육과정 선택 프로그램</h1>
+          <div class="subtitle">과목 선택에 따른 교과별 이수학점을 실시간으로 확인합니다.</div>
         </div>
       </div>
-      <div>
-      <label class="file-picker">진학결과 엑셀 여러 개 시각화
-        <input id="excelInput" type="file" accept=".xlsx,.xls" multiple>
-      </label>
-      <div class="upload-status" id="uploadStatus">엑셀 파일을 선택하면 시각화됩니다.</div>
+      <div class="controls">
+        <label>
+          <span class="sr-only">입학년도</span>
+          <select id="yearSelect" aria-label="입학년도 선택">
+            <option value="2026">2026학년도 입학생</option>
+            <option value="2025">2025학년도 입학생</option>
+          </select>
+        </label>
+        <label class="file-button">
+          엑셀 불러오기
+          <input type="file" id="excelInput" accept=".xlsx,.xls">
+        </label>
+        <button type="button" id="downloadJson">JSON 다운로드</button>
+        <label class="file-button">
+          JSON 복구하기
+          <input type="file" id="jsonInput" accept=".json,application/json">
+        </label>
+        <button type="button" id="downloadPdf" class="primary">PDF 저장</button>
+        <button type="button" id="clearElectives">선택 초기화</button>
       </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section>
+      <div id="notice" class="notice" hidden></div>
+      <div id="courseRoot"></div>
     </section>
 
-    <details class="analysis-panel">
-      <summary>전체 현황</summary>
-      <div class="metrics" id="overallMetrics"></div>
-      <div class="charts">
-        <div class="chart-box">
-          <h3>지원 건수 많은 대학</h3>
-          <canvas id="univApplyChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>합격자 수 많은 대학</h3>
-          <canvas id="univChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>합격률 높은 대학</h3>
-          <canvas id="univRateChart"></canvas>
+    <aside aria-live="polite">
+      <div class="side-head">
+        <div>
+          <div>총 교과 이수학점</div>
+          <div class="total-number"><span id="totalCredits">0</span><small> / 174</small></div>
         </div>
       </div>
-    </details>
-
-    <section class="grid analysis-panel">
-      <article class="section">
-        <h2>대학·전형 검색</h2>
-        <div class="controls">
-          <label>대학명 검색
-            <input id="univSearchInput" type="search" list="univSuggestions" placeholder="대학명 일부 입력">
-            <datalist id="univSuggestions"></datalist>
-          </label>
-          <label>대학 선택
-            <select id="univSelect"></select>
-          </label>
-          <label>키워드
-            <input id="keywordInput" type="search" placeholder="학과, 전형명, 결과">
-          </label>
-        </div>
-        <div class="metrics" id="searchMetrics"></div>
-        <div class="charts">
-          <div class="chart-box">
-            <h3>내신 분포</h3>
-            <canvas id="gpaChart"></canvas>
-          </div>
-          <div class="chart-box">
-            <h3>합격 비율</h3>
-            <canvas id="donutChart"></canvas>
-          </div>
-        </div>
-        <div class="filter-row">
-          <div>
-            <div class="panel-title">결과 필터</div>
-            <div class="check-panel" id="resultChecks"></div>
-          </div>
-          <div>
-            <div class="panel-title">전형명 필터</div>
-            <div class="check-panel" id="typeChecks"></div>
-          </div>
-        </div>
-        <div class="table-actions">
-          <h3>결과 테이블</h3>
-          <button class="primary" id="csvButton" type="button">CSV 다운로드</button>
-        </div>
-        <div class="table-wrap">
-          <table id="resultTable"></table>
-        </div>
-      </article>
-
-      <aside class="section student-panel">
-        <h2>학생별 조회</h2>
-        <div class="controls" style="grid-template-columns:1fr">
-          <label>익명 ID
-            <select id="studentSelect"></select>
-          </label>
-        </div>
-        <div id="studentDetail"></div>
-      </aside>
-    </section>
+      <div class="side-body">
+        <div id="priorityStatus" class="priority-status"></div>
+        <h2 class="panel-title">교과별 이수학점</h2>
+        <div id="areaProgress"></div>
+      </div>
+    </aside>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    let DATA = JSON.parse(document.getElementById('data-json').textContent);
-    const PASS = '합격';
-    const FAIL = '불합격';
-    const OTHER = '기타/미정';
-    const COLORS = { pass: '#248a3d', fail: '#d70015', other: '#6e6e73', blue: '#0071e3' };
-    const state = {
-      years: new Set(DATA.years),
-      univ: '',
-      univQuery: '',
-      keyword: '',
-      resultValues: new Set(),
-      typeValues: new Set(),
-      sortKey: '',
-      sortDir: 1,
-      filteredRows: [],
-      tableRows: []
+    const REQUIRED = {
+      "국어": 20,
+      "수학": 20,
+      "영어": 20,
+      "사회": 14,
+      "과학": 10,
+      "체육": 10,
+      "예술": 10,
+      "교양": 4
     };
-    const charts = {};
 
-    const $ = (id) => document.getElementById(id);
-    const clean = (value) => value === null || value === undefined ? '' : String(value);
-    const compactText = (value) => clean(value).replace(/\s+/g, '');
-    const uniq = (items) => [...new Set(items.map(clean).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
-    const categoryClass = (category) => category === PASS ? 'badge-pass' : category === FAIL ? 'badge-fail' : 'badge-other';
-    const categoryColor = (category) => category === PASS ? COLORS.pass : category === FAIL ? COLORS.fail : COLORS.other;
+    const AREA_COLORS = {
+      "국어": "#2f6fdd",
+      "수학": "#1f8a5b",
+      "영어": "#df7b21",
+      "사회": "#7c4cc2",
+      "과학": "#008c95",
+      "체육": "#d94848",
+      "예술": "#d94f8c",
+      "기술∙가정/정보": "#6b7280",
+      "제2외국어/한문": "#8b5e34",
+      "교양": "#52616f"
+    };
 
-    function setText(node, text) {
-      node.textContent = text;
+    const raw2026 = {
+      note: "",
+      grade1: [
+        group("학교 지정 과목", "required", [
+          c("공통국어1", "국어", 4, "1-1", "공통"),
+          c("공통국어2", "국어", 4, "1-2", "공통"),
+          c("공통수학1", "수학", 4, "1-1", "공통"),
+          c("공통수학2", "수학", 4, "1-2", "공통"),
+          c("공통영어1", "영어", 4, "1-1", "공통"),
+          c("공통영어2", "영어", 4, "1-2", "공통"),
+          c("한국사1", "사회", 3, "1-1", "공통"),
+          c("한국사2", "사회", 3, "1-2", "공통"),
+          c("통합사회1", "사회", 4, "1-1", "공통"),
+          c("통합사회2", "사회", 4, "1-2", "공통"),
+          c("통합과학1", "과학", 4, "1-1", "공통"),
+          c("통합과학2", "과학", 4, "1-2", "공통"),
+          c("과학탐구실험1", "과학", 1, "1-1", "공통"),
+          c("과학탐구실험2", "과학", 1, "1-2", "공통"),
+          c("체육1", "체육", 2, "1-1", "일반"),
+          c("체육2", "체육", 2, "1-2", "일반"),
+          c("음악", "예술", 2, "1학년", "일반"),
+          c("미술", "예술", 2, "1학년", "일반"),
+          c("정보", "기술∙가정/정보", 3, "1-2", "일반"),
+          c("언어생활과 한자", "제2외국어/한문", 3, "1-1", "융합")
+        ]),
+      ],
+      grade2: [
+        group("학교 지정 과목", "required", [
+          c("화법과 언어", "국어", 4, "2-1", "일반"),
+          c("문학", "국어", 4, "2-2", "일반"),
+          c("대수", "수학", 4, "2-1", "일반"),
+          c("미적분Ⅰ", "수학", 4, "2-2", "일반"),
+          c("영어Ⅰ", "영어", 4, "2-1", "일반"),
+          c("영어Ⅱ", "영어", 4, "2-2", "일반"),
+          c("운동과 건강", "체육", 2, "2-1", "진로"),
+          c("스포츠 생활1", "체육", 2, "2-2", "융합")
+        ]),
+        group("2학년 1학기 선택", "elective", [
+          c("독서 토론과 글쓰기", "국어", 3, "2-1", "융합"),
+          c("인공지능 수학", "수학", 3, "2-1", "진로"),
+          c("세계 문화와 영어", "영어", 3, "2-1", "융합"),
+          c("사회와 문화", "사회", 3, "2-1", "일반"),
+          c("세계시민과 지리", "사회", 3, "2-1", "일반"),
+          c("세계사", "사회", 3, "2-1", "일반"),
+          c("현대사회와 윤리", "사회", 3, "2-1", "일반"),
+          c("물리학", "과학", 3, "2-1", "일반"),
+          c("화학", "과학", 3, "2-1", "일반"),
+          c("생명과학", "과학", 3, "2-1", "일반"),
+          c("지구과학", "과학", 3, "2-1", "일반"),
+          c("인공지능 기초", "기술∙가정/정보", 3, "2-1", "진로"),
+          c("소프트웨어와 생활", "기술∙가정/정보", 3, "2-1", "융합"),
+          c("일본어", "제2외국어/한문", 3, "2-1", "일반"),
+          c("중국어", "제2외국어/한문", 3, "2-1", "일반")
+        ], "택4"),
+        group("2학년 1학기 예술 선택", "elective", [
+          c("미술 창작", "예술", 3, "2-1", "진로"),
+          c("음악 연주와 창작", "예술", 3, "2-1", "진로")
+        ], "택1"),
+        group("2학년 2학기 선택", "elective", [
+          c("주제 탐구 독서", "국어", 3, "2-2", "진로"),
+          c("기하", "수학", 3, "2-2", "진로"),
+          c("미디어 영어", "영어", 3, "2-2", "융합"),
+          c("정치", "사회", 3, "2-2", "진로"),
+          c("동아시아 역사 기행", "사회", 3, "2-2", "진로"),
+          c("윤리와 사상", "사회", 3, "2-2", "진로"),
+          c("기후변화와 지속가능한 세계", "사회", 3, "2-2", "융합"),
+          c("여행지리", "사회", 3, "2-2", "융합"),
+          c("역학과 에너지", "과학", 3, "2-2", "진로"),
+          c("물질과 에너지", "과학", 3, "2-2", "진로"),
+          c("세포와 물질대사", "과학", 3, "2-2", "진로"),
+          c("지구시스템과학", "과학", 3, "2-2", "진로"),
+          c("데이터 과학", "기술∙가정/정보", 3, "2-2", "진로"),
+          c("인공지능 일반", "기술∙가정/정보", 3, "2-2", "진로"),
+          c("일본 언어와 역사의 이해1", "교양", 3, "2-2", "진로"),
+          c("중국 언어와 역사의 이해1", "교양", 3, "2-2", "진로")
+        ], "택4"),
+        group("2학년 2학기 예술 선택", "elective", [
+          c("미술과 매체", "예술", 3, "2-2", "융합"),
+          c("음악과 미디어", "예술", 3, "2-2", "융합")
+        ], "택1")
+      ],
+      grade3: [
+        group("학교 지정 과목", "required", [
+          c("독서와 작문", "국어", 4, "3-1", "일반"),
+          c("확률과 통계", "수학", 4, "3-1", "일반"),
+          c("영어 독해와 작문", "영어", 4, "3-1", "일반"),
+          c("스포츠 과학", "체육", 1, "3-1", "진로"),
+          c("스포츠 문화", "체육", 1, "3-2", "진로")
+        ]),
+        group("3학년 1학기 선택", "elective", [
+          c("문학과 영상", "국어", 3, "3-1", "진로"),
+          c("미적분Ⅱ", "수학", 3, "3-1", "진로"),
+          c("경제 수학", "수학", 3, "3-1", "진로"),
+          c("수학과제 탐구", "수학", 3, "3-1", "융합"),
+          c("영미 문학 읽기", "영어", 3, "3-1", "진로"),
+          c("경제", "사회", 3, "3-1", "진로"),
+          c("한국지리 탐구", "사회", 3, "3-1", "진로"),
+          c("국제 관계의 이해", "사회", 3, "3-1", "진로"),
+          c("사회문제 탐구", "사회", 3, "3-1", "융합"),
+          c("윤리문제 탐구", "사회", 3, "3-1", "융합"),
+          c("전자기와 양자", "과학", 3, "3-1", "진로"),
+          c("화학 반응의 세계", "과학", 3, "3-1", "진로"),
+          c("생물의 유전", "과학", 3, "3-1", "진로"),
+          c("행성우주과학", "과학", 3, "3-1", "진로"),
+          c("융합과학 탐구", "과학", 3, "3-1", "융합"),
+          c("프로그래밍", "기술∙가정/정보", 3, "3-1", "진로")
+        ], "택4"),
+        group("3학년 1학기 교양 선택", "elective", [
+          c("생태와 환경", "교양", 2, "3-1", "일반"),
+          c("보건", "교양", 2, "3-1", "진로"),
+          c("교육의 이해", "교양", 2, "3-1", "진로"),
+          c("일본 언어와 역사의 이해2", "교양", 2, "3-1", "진로"),
+          c("중국 언어와 역사의 이해2", "교양", 2, "3-1", "진로")
+        ], "택1"),
+        group("3학년 2학기 선택", "elective", [
+          c("언어생활 탐구", "국어", 3, "3-2", "융합"),
+          c("실용 통계", "수학", 3, "3-2", "융합"),
+          c("심화 영어 독해와 작문", "영어", 3, "3-2", "진로"),
+          c("도시의 미래 탐구", "사회", 3, "3-2", "진로"),
+          c("법과 사회", "사회", 3, "3-2", "진로"),
+          c("인문학과 윤리", "사회", 3, "3-2", "진로"),
+          c("금융과 경제생활", "사회", 3, "3-2", "융합"),
+          c("역사로 탐구하는 현대 세계", "사회", 3, "3-2", "융합"),
+          c("기후변화와 환경생태", "과학", 3, "3-2", "융합"),
+          c("과학의 역사와 문화", "과학", 3, "3-2", "융합"),
+          c("정보과학", "기술∙가정/정보", 3, "3-2", "진로"),
+          c("한문", "제2외국어/한문", 3, "3-2", "일반"),
+          c("심화 중국어", "제2외국어/한문", 3, "3-2", "진로"),
+          c("심화 일본어", "제2외국어/한문", 3, "3-2", "진로")
+        ], "택8"),
+        group("3학년 2학기 교양 선택", "elective", [
+          c("인간과 심리", "교양", 2, "3-2", "진로"),
+          c("논술", "교양", 2, "3-2", "융합"),
+          c("인간과 경제활동", "교양", 2, "3-2", "융합")
+        ], "택1")
+      ]
+    };
+
+    const raw2025 = {
+      note: "",
+      grade1: [
+        group("학교 지정 과목", "required", [
+          c("공통국어1", "국어", 4, "1-1", "공통"),
+          c("공통국어2", "국어", 4, "1-2", "공통"),
+          c("공통수학1", "수학", 4, "1-1", "공통"),
+          c("공통수학2", "수학", 4, "1-2", "공통"),
+          c("공통영어1", "영어", 4, "1-1", "공통"),
+          c("공통영어2", "영어", 4, "1-2", "공통"),
+          c("한국사1", "사회", 3, "1-1", "공통"),
+          c("한국사2", "사회", 3, "1-2", "공통"),
+          c("통합사회1", "사회", 4, "1-1", "공통"),
+          c("통합사회2", "사회", 4, "1-2", "공통"),
+          c("통합과학1", "과학", 4, "1-1", "공통"),
+          c("통합과학2", "과학", 4, "1-2", "공통"),
+          c("과학탐구실험1", "과학", 1, "1-1", "공통"),
+          c("과학탐구실험2", "과학", 1, "1-2", "공통"),
+          c("체육1", "체육", 2, "1-1", "일반"),
+          c("체육2", "체육", 2, "1-2", "일반"),
+          c("음악", "예술", 2, "1학년", "일반"),
+          c("미술", "예술", 2, "1학년", "일반"),
+          c("정보", "기술∙가정/정보", 3, "1-2", "일반"),
+          c("한문", "제2외국어/한문", 3, "1-1", "일반")
+        ])
+      ],
+      grade2: [
+        group("학교 지정 과목", "required", [
+          c("화법과 언어", "국어", 4, "2-1", "일반"),
+          c("문학", "국어", 4, "2-2", "일반"),
+          c("대수", "수학", 4, "2-1", "일반"),
+          c("미적분Ⅰ", "수학", 4, "2-2", "일반"),
+          c("영어Ⅰ", "영어", 4, "2-1", "일반"),
+          c("영어Ⅱ", "영어", 4, "2-2", "일반"),
+          c("운동과 건강", "체육", 2, "2-1", "진로"),
+          c("스포츠 생활1", "체육", 2, "2-2", "융합")
+        ]),
+        group("2학년 1학기 선택", "elective", [
+          c("독서 토론과 글쓰기", "국어", 3, "2-1", "융합"),
+          c("인공지능 수학", "수학", 3, "2-1", "진로"),
+          c("영미 문학 읽기", "영어", 3, "2-1", "진로"),
+          c("사회와 문화", "사회", 3, "2-1", "일반"),
+          c("세계시민과 지리", "사회", 3, "2-1", "일반"),
+          c("세계사", "사회", 3, "2-1", "일반"),
+          c("현대사회와 윤리", "사회", 3, "2-1", "일반"),
+          c("물리학", "과학", 3, "2-1", "일반"),
+          c("화학", "과학", 3, "2-1", "일반"),
+          c("생명과학", "과학", 3, "2-1", "일반"),
+          c("지구과학", "과학", 3, "2-1", "일반"),
+          c("인공지능 기초", "기술∙가정/정보", 3, "2-1", "진로"),
+          c("소프트웨어와 생활", "기술∙가정/정보", 3, "2-1", "융합"),
+          c("중국어", "제2외국어/한문", 3, "2-1", "일반")
+        ], "택4"),
+        group("2학년 1학기 예술 선택", "elective", [
+          c("미술 창작", "예술", 3, "2-1", "진로"),
+          c("음악 연주와 창작", "예술", 3, "2-1", "진로")
+        ], "택1"),
+        group("2학년 2학기 선택", "elective", [
+          c("주제 탐구 독서", "국어", 3, "2-2", "진로"),
+          c("기하", "수학", 3, "2-2", "진로"),
+          c("세계 문화와 영어", "영어", 3, "2-2", "융합"),
+          c("정치", "사회", 3, "2-2", "진로"),
+          c("동아시아 역사 기행", "사회", 3, "2-2", "진로"),
+          c("윤리와 사상", "사회", 3, "2-2", "진로"),
+          c("기후변화와 지속가능한 세계", "사회", 3, "2-2", "융합"),
+          c("여행지리", "사회", 3, "2-2", "융합"),
+          c("역학과 에너지", "과학", 3, "2-2", "진로"),
+          c("물질과 에너지", "과학", 3, "2-2", "진로"),
+          c("세포와 물질대사", "과학", 3, "2-2", "진로"),
+          c("지구시스템과학", "과학", 3, "2-2", "진로"),
+          c("데이터 과학", "기술∙가정/정보", 3, "2-2", "진로"),
+          c("인공지능 일반", "기술∙가정/정보", 3, "2-2", "진로"),
+          c("일본어", "제2외국어/한문", 3, "2-2", "일반")
+        ], "택4"),
+        group("2학년 2학기 예술 선택", "elective", [
+          c("미술과 매체", "예술", 3, "2-2", "융합"),
+          c("음악과 미디어", "예술", 3, "2-2", "융합")
+        ], "택1")
+      ],
+      grade3: [
+        group("학교 지정 과목", "required", [
+          c("독서와 작문", "국어", 4, "3-1", "일반"),
+          c("확률과 통계", "수학", 4, "3-1", "일반"),
+          c("영어 독해와 작문", "영어", 4, "3-1", "일반"),
+          c("스포츠 과학", "체육", 1, "3-1", "진로"),
+          c("스포츠 문화", "체육", 1, "3-2", "진로")
+        ]),
+        group("3학년 1학기 선택", "elective", [
+          c("문학과 영상", "국어", 3, "3-1", "진로"),
+          c("미적분Ⅱ", "수학", 3, "3-1", "진로"),
+          c("경제 수학", "수학", 3, "3-1", "진로"),
+          c("수학과제 탐구", "수학", 3, "3-1", "융합"),
+          c("미디어 영어", "영어", 3, "3-1", "융합"),
+          c("경제", "사회", 3, "3-1", "진로"),
+          c("한국지리 탐구", "사회", 3, "3-1", "진로"),
+          c("국제 관계의 이해", "사회", 3, "3-1", "진로"),
+          c("사회문제 탐구", "사회", 3, "3-1", "융합"),
+          c("윤리문제 탐구", "사회", 3, "3-1", "융합"),
+          c("전자기와 양자", "과학", 3, "3-1", "진로"),
+          c("화학 반응의 세계", "과학", 3, "3-1", "진로"),
+          c("생물의 유전", "과학", 3, "3-1", "진로"),
+          c("행성우주과학", "과학", 3, "3-1", "진로"),
+          c("융합과학 탐구", "과학", 3, "3-1", "융합"),
+          c("프로그래밍", "기술∙가정/정보", 3, "3-1", "진로")
+        ], "택4"),
+        group("3학년 1학기 교양 선택", "elective", [
+          c("생태와 환경", "교양", 2, "3-1", "일반"),
+          c("보건", "교양", 2, "3-1", "진로"),
+          c("교육의 이해", "교양", 2, "3-1", "진로")
+        ], "택1"),
+        group("3학년 2학기 선택", "elective", [
+          c("언어생활 탐구", "국어", 3, "3-2", "융합"),
+          c("실용 통계", "수학", 3, "3-2", "융합"),
+          c("심화 영어 독해와 작문", "영어", 3, "3-2", "진로"),
+          c("도시의 미래 탐구", "사회", 3, "3-2", "진로"),
+          c("법과 사회", "사회", 3, "3-2", "진로"),
+          c("인문학과 윤리", "사회", 3, "3-2", "진로"),
+          c("금융과 경제생활", "사회", 3, "3-2", "융합"),
+          c("역사로 탐구하는 현대 세계", "사회", 3, "3-2", "융합"),
+          c("기후변화와 환경생태", "과학", 3, "3-2", "융합"),
+          c("과학의 역사와 문화", "과학", 3, "3-2", "융합"),
+          c("고급 화학", "과학", 3, "3-2", "진로"),
+          c("정보과학", "기술∙가정/정보", 3, "3-2", "진로"),
+          c("언어생활과 한자", "제2외국어/한문", 3, "3-2", "융합"),
+          c("중국 문화", "제2외국어/한문", 3, "3-2", "융합"),
+          c("일본 문화", "제2외국어/한문", 3, "3-2", "융합")
+        ], "택8"),
+        group("3학년 2학기 교양 선택", "elective", [
+          c("인간과 심리", "교양", 2, "3-2", "진로"),
+          c("논술", "교양", 2, "3-2", "융합"),
+          c("인간과 경제활동", "교양", 2, "3-2", "융합")
+        ], "택1")
+      ]
+    };
+
+    const courses = {
+      2026: raw2026,
+      2025: raw2025
+    };
+
+    const root = document.getElementById("courseRoot");
+    const yearSelect = document.getElementById("yearSelect");
+    const totalCredits = document.getElementById("totalCredits");
+    const areaProgress = document.getElementById("areaProgress");
+    const priorityStatus = document.getElementById("priorityStatus");
+    const notice = document.getElementById("notice");
+    const excelInput = document.getElementById("excelInput");
+    const jsonInput = document.getElementById("jsonInput");
+    const SEMESTER_COLUMNS = [
+      { index: 6, gradeKey: "grade1", label: "1-1", title: "1학년 1학기" },
+      { index: 7, gradeKey: "grade1", label: "1-2", title: "1학년 2학기" },
+      { index: 8, gradeKey: "grade2", label: "2-1", title: "2학년 1학기" },
+      { index: 9, gradeKey: "grade2", label: "2-2", title: "2학년 2학기" },
+      { index: 10, gradeKey: "grade3", label: "3-1", title: "3학년 1학기" },
+      { index: 11, gradeKey: "grade3", label: "3-2", title: "3학년 2학기" }
+    ];
+    const AREA_ALIASES = {
+      "국 어": "국어",
+      "수 학": "수학",
+      "영 어": "영어",
+      "사 회": "사회",
+      "과 학": "과학",
+      "체 육": "체육",
+      "예 술": "예술",
+      "교 양": "교양"
+    };
+
+    function c(name, area, credits, sem, type) {
+      return { name, area, credits, sem, type };
     }
 
-    function metric(label, value) {
-      return `<div class="metric"><div class="metric-label">${escapeHtml(label)}</div><div class="metric-value">${escapeHtml(value)}</div></div>`;
+    function group(title, kind, items, rule = "") {
+      return { title, kind, items, rule };
+    }
+
+    function courseId(year, gradeKey, groupIndex, courseIndex) {
+      return `${year}-${gradeKey}-${groupIndex}-${courseIndex}`;
+    }
+
+    function normalizeText(value) {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function courseRestoreKey(course) {
+      return `${normalizeText(course?.name).replace(/\s+/g, "").toLowerCase()}|${normalizeText(course?.sem).replace(/\s+/g, "").toLowerCase()}|${normalizeText(course?.area).replace(/\s+/g, "").toLowerCase()}`;
+    }
+
+    function courseNameRestoreKey(course) {
+      return normalizeText(course?.name).replace(/\s+/g, "").toLowerCase();
+    }
+
+    function normalizeArea(value) {
+      const text = normalizeText(value).replace(/\s*\/\s*/g, "/");
+      if (!text) return "";
+      const compact = text.replace(/\s+/g, "");
+      if (compact.includes("제2외국어")) return "제2외국어/한문";
+      if (compact.includes("기술")) return "기술∙가정/정보";
+      if (compact.includes("사회")) return "사회";
+      return AREA_ALIASES[text] || AREA_ALIASES[compact] || text;
+    }
+
+    function numberFrom(value) {
+      const match = normalizeText(value).match(/\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : 0;
+    }
+
+    function selectionRule(value) {
+      const text = normalizeText(value);
+      const match = text.match(/택\s*(\d+)/);
+      return match ? `택${match[1]}` : "";
+    }
+
+    function semesterForRequired(row) {
+      const semesters = SEMESTER_COLUMNS.filter(col => normalizeText(row[col.index]));
+      if (!semesters.length) return "";
+      const grades = [...new Set(semesters.map(col => col.label[0]))];
+      return grades.length === 1 && semesters.length > 1 ? `${grades[0]}학년` : semesters[0].label;
+    }
+
+    function groupTitleForSelection(semester, area) {
+      const suffix = area === "예술" || area === "교양" ? ` ${area}` : "";
+      return `${semester.title}${suffix} 선택`;
+    }
+
+    function findCurriculumSheet(workbook) {
+      return workbook.SheetNames
+        .map(name => workbook.Sheets[name])
+        .find(sheet => {
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+          return rows.some(row => row.some(cell => normalizeText(cell).includes("교육과정 학점 배당표")));
+        });
+    }
+
+    function parseCurriculumWorkbook(workbook, fileName) {
+      const sheet = findCurriculumSheet(workbook);
+      if (!sheet) throw new Error("교육과정 학점 배당표 시트를 찾지 못했습니다.");
+
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      const parsed = { note: `${fileName}에서 불러온 교육과정입니다.`, grade1: [], grade2: [], grade3: [] };
+      const required = { grade1: [], grade2: [], grade3: [] };
+      let section = "";
+      let area = "";
+      let activeGroup = null;
+
+      rows.forEach(row => {
+        section = normalizeText(row[0]) || section;
+        area = normalizeArea(row[1]) || area;
+
+        const type = normalizeText(row[2]);
+        const name = normalizeText(row[3]);
+        const credits = numberFrom(row[5]) || numberFrom(row[4]);
+        if (!name || !credits || name.includes("과목")) return;
+
+        if (section.includes("학교")) {
+          const course = c(name, area, credits, semesterForRequired(row), type);
+          SEMESTER_COLUMNS
+            .filter(col => normalizeText(row[col.index]) && col.gradeKey)
+            .forEach(col => {
+              if (!required[col.gradeKey].some(item => item.name === course.name)) {
+                required[col.gradeKey].push(course);
+              }
+            });
+          activeGroup = null;
+          return;
+        }
+
+        const startedBy = SEMESTER_COLUMNS.find(col => selectionRule(row[col.index]));
+        if (startedBy) {
+          activeGroup = {
+            gradeKey: startedBy.gradeKey,
+            title: groupTitleForSelection(startedBy, area),
+            rule: selectionRule(row[startedBy.index]),
+            semesterLabel: startedBy.label,
+            items: []
+          };
+          parsed[startedBy.gradeKey].push(group(activeGroup.title, "elective", activeGroup.items, activeGroup.rule));
+        }
+
+        if (activeGroup) {
+          activeGroup.items.push(c(name, area, credits, activeGroup.semesterLabel, type));
+        }
+      });
+
+      ["grade1", "grade2", "grade3"].forEach(gradeKey => {
+        if (required[gradeKey].length) {
+          parsed[gradeKey].unshift(group("학교 지정 과목", "required", required[gradeKey]));
+        }
+      });
+
+      if (!parsed.grade1.length && !parsed.grade2.length && !parsed.grade3.length) {
+        throw new Error("과목 데이터를 읽지 못했습니다. 배당표의 열 구성이 바뀌었는지 확인해 주세요.");
+      }
+
+      return parsed;
+    }
+
+    function useImportedCourses(data, fileName) {
+      const importedKey = "imported";
+      courses[importedKey] = data;
+      let option = yearSelect.querySelector(`option[value="${importedKey}"]`);
+      if (!option) {
+        option = document.createElement("option");
+        option.value = importedKey;
+        yearSelect.appendChild(option);
+      }
+      option.textContent = `불러온 엑셀: ${fileName.replace(/\.[^.]+$/, "")}`;
+      yearSelect.value = importedKey;
+      render();
+    }
+
+    function render() {
+      const year = yearSelect.value;
+      const data = courses[year];
+      root.innerHTML = "";
+      notice.hidden = !data.note;
+      notice.textContent = data.note || "";
+
+      ["grade1", "grade2", "grade3"].forEach((gradeKey, index) => {
+        const details = document.createElement("details");
+        details.open = true;
+
+        const summary = document.createElement("summary");
+        const gradeName = `${index + 1}학년 과목`;
+        const count = data[gradeKey].reduce((sum, groupData) => sum + groupData.items.length, 0);
+        summary.innerHTML = `<span>${gradeName}</span><span class="grade-meta">${count}개 과목</span>`;
+        details.appendChild(summary);
+
+        const section = document.createElement("div");
+        section.className = "section";
+
+        data[gradeKey].forEach((groupData, groupIndex) => {
+          const isRequired = groupData.kind === "required";
+          const groupEl = document.createElement(isRequired ? "details" : "div");
+          groupEl.className = `group ${isRequired ? "group-panel" : ""}`;
+          const choiceLimit = Number((groupData.rule.match(/택\s*(\d+)/) || [])[1] || 0);
+          if (choiceLimit) groupEl.dataset.limit = choiceLimit;
+
+          if (isRequired) {
+            const summary = document.createElement("summary");
+            summary.innerHTML = `
+              <span class="group-title">${groupData.title}</span>
+              <span class="group-rule">고정 이수</span>
+            `;
+            groupEl.appendChild(summary);
+          } else {
+            groupEl.innerHTML = `
+              <div class="group-head">
+                <h2 class="group-title">${groupData.title}</h2>
+                <div class="group-rule" data-rule="${groupData.rule}">${groupData.rule}</div>
+              </div>
+            `;
+          }
+
+          const grid = document.createElement("div");
+          grid.className = "course-grid";
+          groupEl.appendChild(grid);
+
+          groupData.items.forEach((course, courseIndex) => {
+            const id = courseId(year, gradeKey, groupIndex, courseIndex);
+            const label = document.createElement("label");
+            label.className = `course ${isRequired ? "required" : ""}`;
+            label.style.setProperty("--area", AREA_COLORS[course.area] || "#8a94a8");
+            label.innerHTML = `
+              <input type="checkbox" data-course='${JSON.stringify(course)}' ${isRequired ? "checked disabled" : ""} id="${id}">
+              <span>
+                <span class="course-name">${course.name}</span>
+                <span class="chips">
+                  <span class="chip">${course.area}</span>
+                  <span class="chip">${course.credits}학점</span>
+                  <span class="chip">${course.sem}</span>
+                  <span class="chip">${course.type}</span>
+                </span>
+              </span>
+            `;
+            grid.appendChild(label);
+          });
+
+          section.appendChild(groupEl);
+        });
+
+        details.appendChild(section);
+        root.appendChild(details);
+      });
+
+      root.querySelectorAll("input[type='checkbox']").forEach(input => {
+        input.addEventListener("change", handleCourseChange);
+      });
+      update();
+    }
+
+    function selectedCourses() {
+      return [...root.querySelectorAll("input[type='checkbox']:checked")]
+        .map(input => JSON.parse(input.dataset.course));
+    }
+
+    function selectedElectiveCourses() {
+      return [...root.querySelectorAll("input[type='checkbox']:checked")]
+        .filter(input => !input.closest(".course")?.classList.contains("required"))
+        .map(input => JSON.parse(input.dataset.course));
+    }
+
+    function sumsForCourses(selected) {
+      const sums = {};
+      let total = 0;
+      selected.forEach(course => {
+        sums[course.area] = (sums[course.area] || 0) + course.credits;
+        total += course.credits;
+      });
+      return { sums, total };
+    }
+
+    function buildSelectionReport() {
+      const selected = selectedCourses();
+      const electives = selectedElectiveCourses();
+      const { sums, total } = sumsForCourses(selected);
+      const techLangCredits = upperTechLangCourses(selected).reduce((sum, course) => sum + course.credits, 0);
+      const koreanMathEnglish = (sums["국어"] || 0) + (sums["수학"] || 0) + (sums["영어"] || 0);
+
+      return {
+        title: "오산고등학교 교육과정 선택 내역",
+        generatedAt: new Date().toLocaleString("ko-KR"),
+        admissionYear: yearSelect.value === "imported" ? "불러온 엑셀" : `${yearSelect.value}학년도 입학생`,
+        note: notice.hidden ? "" : notice.textContent,
+        totalCredits: total,
+        requiredTotalCredits: 174,
+        priorityRules: {
+          koreanMathEnglishCredits: koreanMathEnglish,
+          koreanMathEnglishLimit: 81,
+          koreanMathEnglishOk: koreanMathEnglish <= 81,
+          techLangCredits,
+          techLangRequiredCredits: 12,
+          techLangOk: techLangCredits >= 12
+        },
+        areaCredits: Object.fromEntries(Object.keys(REQUIRED).map(area => [
+          area,
+          {
+            credits: sums[area] || 0,
+            requiredCredits: REQUIRED[area],
+            ok: (sums[area] || 0) >= REQUIRED[area]
+          }
+        ])),
+        courses: electives.map(course => ({ ...course }))
+      };
+    }
+
+    function safeFilePart(value) {
+      return String(value || "")
+        .replace(/[\\/:*?"<>|]/g, "")
+        .replace(/\s+/g, "_")
+        .slice(0, 40);
+    }
+
+    function downloadFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     function escapeHtml(value) {
-      return clean(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
-    function computeMetrics(rows) {
-      const total = rows.length;
-      const passed = rows.filter(r => r.category === PASS).length;
-      const failed = rows.filter(r => r.category === FAIL).length;
-      const other = total - passed - failed;
-      const rate = total ? `${(passed / total * 100).toFixed(1)}%` : '-';
-      return { total, passed, failed, other, rate };
+    function reportFileBase(report) {
+      const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      return `${safeFilePart(report.admissionYear)}_선택과목_${date}`;
     }
 
-    function renderMetrics(id, rows) {
-      const m = computeMetrics(rows);
-      $(id).innerHTML = [
-        metric('지원 건수', `${m.total.toLocaleString('ko-KR')}건`),
-        metric('합격', `${m.passed.toLocaleString('ko-KR')}건`),
-        metric('불합격', `${m.failed.toLocaleString('ko-KR')}건`),
-        metric('합격률', m.rate)
-      ].join('');
+    function downloadSelectionJson() {
+      const report = buildSelectionReport();
+      downloadFile(
+        `${reportFileBase(report)}.json`,
+        JSON.stringify(report, null, 2),
+        "application/json;charset=utf-8"
+      );
     }
 
-    function yearFilteredRows() {
-      if (!DATA.years.length || state.years.size === 0) return DATA.rows;
-      return DATA.rows.filter(row => state.years.has(clean(row.year)));
-    }
-
-    function searchFilteredRows() {
-      let rows = yearFilteredRows();
-      if (state.univ) rows = rows.filter(row => row.univ === state.univ);
-      else if (state.univQuery.trim()) {
-        const univQuery = compactText(state.univQuery).toLowerCase();
-        rows = rows.filter(row => compactText(row.univ).toLowerCase().includes(univQuery));
+    function restoreYearFromReport(report) {
+      const admissionYear = String(report?.admissionYear || "");
+      const matchedOption = [...yearSelect.options].find(option => {
+        return admissionYear.includes(option.value) || admissionYear === option.textContent;
+      });
+      if (matchedOption && yearSelect.value !== matchedOption.value) {
+        yearSelect.value = matchedOption.value;
+        render();
       }
-      const keyword = state.keyword.trim().toLowerCase();
-      if (keyword) {
-        rows = rows.filter(row => Object.values(row).some(value => clean(value).toLowerCase().includes(keyword)));
-      }
-      state.filteredRows = rows;
-      return rows;
     }
 
-    function tableFilteredRows() {
-      let rows = searchFilteredRows();
-      if (state.resultValues.size) rows = rows.filter(row => state.resultValues.has(clean(row.final_result || row.category)));
-      if (state.typeValues.size) rows = rows.filter(row => state.typeValues.has(clean(row.type_name)));
-      if (state.sortKey) {
-        rows = [...rows].sort((a, b) => {
-          const av = a[state.sortKey], bv = b[state.sortKey];
-          const an = typeof av === 'number' ? av : Number(av);
-          const bn = typeof bv === 'number' ? bv : Number(bv);
-          if (!Number.isNaN(an) && !Number.isNaN(bn)) return (an - bn) * state.sortDir;
-          return clean(av).localeCompare(clean(bv), 'ko') * state.sortDir;
-        });
-      }
-      state.tableRows = rows;
-      return rows;
+    function applyRestoredCourses(courses) {
+      const list = Array.isArray(courses) ? courses : [];
+      const keys = new Set(list.map(courseRestoreKey));
+      const names = new Set(list.map(courseNameRestoreKey));
+      let restored = 0;
+
+      root.querySelectorAll("input[type='checkbox']").forEach(input => {
+        if (input.closest(".course")?.classList.contains("required")) return;
+        input.checked = false;
+        input.disabled = false;
+        input.closest(".course")?.classList.remove("limit-locked");
+      });
+
+      root.querySelectorAll("input[type='checkbox']").forEach(input => {
+        if (input.closest(".course")?.classList.contains("required")) return;
+        const course = JSON.parse(input.dataset.course);
+        const checked = keys.has(courseRestoreKey(course)) || names.has(courseNameRestoreKey(course));
+        input.checked = checked;
+        if (checked) restored += 1;
+      });
+      update();
+      return restored;
     }
 
-    function renderYearButtons() {
-      const wrap = $('yearButtons');
-      if (!DATA.years.length) {
-        wrap.innerHTML = '';
-        wrap.onclick = null;
+    async function restoreSelectionJson(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const report = JSON.parse(await file.text());
+        if (!Array.isArray(report.courses)) throw new Error("courses 목록이 없습니다.");
+        restoreYearFromReport(report);
+        const restored = applyRestoredCourses(report.courses);
+        notice.hidden = false;
+        notice.textContent = `JSON 파일에서 선택 과목 ${restored}개를 복구했습니다.`;
+      } catch (error) {
+        notice.hidden = false;
+        notice.textContent = `JSON 파일을 복구할 수 없습니다. ${error.message}`;
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    function printSelectionPdf() {
+      const report = buildSelectionReport();
+      const areaRows = Object.entries(report.areaCredits).map(([area, data]) => `
+        <tr>
+          <td>${escapeHtml(area)}</td>
+          <td>${data.credits}학점</td>
+          <td>${data.requiredCredits}학점</td>
+          <td>${data.ok ? "충족" : "미충족"}</td>
+        </tr>
+      `).join("");
+      const courseRows = report.courses.map((course, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(course.name)}</td>
+          <td>${escapeHtml(course.area)}</td>
+          <td>${course.credits}학점</td>
+          <td>${escapeHtml(course.sem)}</td>
+          <td>${escapeHtml(course.type)}</td>
+        </tr>
+      `).join("");
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("팝업이 차단되어 PDF 저장 화면을 열지 못했습니다. 팝업 차단을 해제한 뒤 다시 시도해 주세요.");
         return;
       }
-      wrap.innerHTML = DATA.years.map(year => `<button type="button" class="pill active" data-year="${escapeHtml(year)}">${escapeHtml(year)}</button>`).join('');
-      wrap.onclick = (event) => {
-        const button = event.target.closest('button[data-year]');
-        if (!button) return;
-        const year = button.dataset.year;
-        if (state.years.has(year)) state.years.delete(year);
-        else state.years.add(year);
-        button.classList.toggle('active', state.years.has(year));
-        refreshAll();
-      };
+
+      printWindow.document.write(`
+        <!doctype html>
+        <html lang="ko">
+        <head>
+          <meta charset="utf-8">
+          <title>${escapeHtml(report.title)}</title>
+          <style>
+            @page { size: A4; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body { margin: 0; color: #202636; font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif; line-height: 1.45; }
+            h1 { margin: 0 0 6px; font-size: 22px; }
+            h2 { margin: 22px 0 8px; font-size: 15px; }
+            .meta { color: #52616f; font-size: 12px; }
+            .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+            .box { border: 1px solid #dfe4ee; border-radius: 6px; padding: 10px; }
+            .label { color: #697184; font-size: 11px; font-weight: 700; }
+            .value { margin-top: 4px; font-size: 18px; font-weight: 900; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; page-break-inside: auto; }
+            th, td { border: 1px solid #dfe4ee; padding: 6px 7px; text-align: left; vertical-align: top; }
+            th { background: #f3f5f9; font-weight: 900; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            .note { margin-top: 8px; color: #6f4e07; font-size: 11px; }
+          </style>
+        </head>
+        <body>
+          <h1>${escapeHtml(report.title)}</h1>
+          <div class="meta">${escapeHtml(report.admissionYear)} · 생성일 ${escapeHtml(report.generatedAt)}</div>
+          ${report.note ? `<div class="note">${escapeHtml(report.note)}</div>` : ""}
+          <section class="summary">
+            <div class="box"><div class="label">총 교과 이수학점</div><div class="value">${report.totalCredits} / ${report.requiredTotalCredits}</div></div>
+            <div class="box"><div class="label">국어+수학+영어</div><div class="value">${report.priorityRules.koreanMathEnglishCredits} / ${report.priorityRules.koreanMathEnglishLimit}</div></div>
+            <div class="box"><div class="label">기술·가정/정보 + 제2외국어/한문</div><div class="value">${report.priorityRules.techLangCredits} / ${report.priorityRules.techLangRequiredCredits}</div></div>
+          </section>
+          <h2>교과별 이수학점</h2>
+          <table>
+            <thead><tr><th>교과</th><th>이수</th><th>필수</th><th>상태</th></tr></thead>
+            <tbody>${areaRows}</tbody>
+          </table>
+          <h2>선택 과목 목록</h2>
+          <table>
+            <thead><tr><th>No.</th><th>과목명</th><th>교과</th><th>학점</th><th>학기</th><th>유형</th></tr></thead>
+            <tbody>${courseRows}</tbody>
+          </table>
+          <script>
+            window.addEventListener("load", () => {
+              document.title = ${JSON.stringify(reportFileBase(report))};
+              setTimeout(() => window.print(), 150);
+            });
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
-    function renderUnivSelect() {
-      const univQuery = compactText(state.univQuery).toLowerCase();
-      const univs = univQuery
-        ? DATA.univs.filter(univ => compactText(univ).toLowerCase().includes(univQuery))
-        : DATA.univs;
-      if (state.univ && !univs.includes(state.univ)) state.univ = '';
-      $('univSelect').innerHTML = '<option value="">전체보기</option>' + univs.map(univ => `<option value="${escapeHtml(univ)}">${escapeHtml(univ)}</option>`).join('');
-      $('univSelect').value = state.univ;
+    function update() {
+      const selected = selectedCourses();
+      const { sums, total } = sumsForCourses(selected);
+
+      totalCredits.textContent = total;
+      updateGroupLimits();
+      renderAreas(sums, selected);
+      renderPriorityRules(sums);
     }
 
-    function renderUnivSuggestions() {
-      $('univSuggestions').innerHTML = DATA.univs.map(univ => `<option value="${escapeHtml(univ)}"></option>`).join('');
+    function groupLimit(groupEl) {
+      return Number(groupEl.dataset.limit || 0);
     }
 
-    function renderSelects() {
-      renderUnivSuggestions();
-      renderUnivSelect();
-      $('univSearchInput').addEventListener('input', (event) => {
-        state.univQuery = event.target.value;
-        state.univ = '';
-        renderUnivSelect();
-        refreshAll();
-      });
-      $('univSelect').addEventListener('change', (event) => {
-        state.univ = event.target.value;
-        refreshAll();
-      });
-      $('keywordInput').addEventListener('input', (event) => {
-        state.keyword = event.target.value;
-        refreshAll();
-      });
-      $('csvButton').addEventListener('click', downloadCsv);
-      $('htmlDownloadButton').addEventListener('click', downloadCurrentHtml);
-      $('bookmarkButton').addEventListener('click', showBookmarkGuide);
-      $('studentSelect').addEventListener('change', renderStudent);
-      $('excelInput').addEventListener('change', handleExcelUpload);
+    function groupInputs(groupEl) {
+      return [...groupEl.querySelectorAll("input[type='checkbox']")];
     }
 
-    function showBookmarkGuide() {
-      const shortcut = /Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'Command+D' : 'Ctrl+D';
-      window.alert(`브라우저 보안 정책상 자동 추가는 제한됩니다.\n주소창에서 이 페이지를 연 뒤 ${shortcut}를 눌러 즐겨찾기에 추가해주세요.`);
-    }
+    function updateGroupLimits() {
+      root.querySelectorAll(".group[data-limit]").forEach(groupEl => {
+        const limit = groupLimit(groupEl);
+        const inputs = groupInputs(groupEl);
+        const checkedCount = inputs.filter(input => input.checked).length;
+        const isFull = checkedCount >= limit;
+        const ruleEl = groupEl.querySelector(".group-rule");
 
-    function renderCheckPanel(id, values, selectedSet, fallbackLabel) {
-      const panel = $(id);
-      if (!values.length) {
-        panel.innerHTML = `<div class="empty">${escapeHtml(fallbackLabel)}</div>`;
-        return;
-      }
-      panel.innerHTML = values.map((value, index) => {
-        const checked = selectedSet.size === 0 || selectedSet.has(value) ? 'checked' : '';
-        return `<label><input type="checkbox" value="${escapeHtml(value)}" ${checked}> <span>${escapeHtml(value)}</span></label>`;
-      }).join('');
-      panel.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', () => {
-          const checked = [...panel.querySelectorAll('input:checked')].map(item => item.value);
-          selectedSet.clear();
-          if (checked.length !== values.length) checked.forEach(value => selectedSet.add(value));
-          refreshTableOnly();
-        });
-      });
-    }
-
-    function syncFilterPanels(rows) {
-      const resultValues = uniq(rows.map(row => row.final_result || row.category));
-      const typeValues = uniq(rows.map(row => row.type_name));
-      for (const value of [...state.resultValues]) if (!resultValues.includes(value)) state.resultValues.delete(value);
-      for (const value of [...state.typeValues]) if (!typeValues.includes(value)) state.typeValues.delete(value);
-      renderCheckPanel('resultChecks', resultValues, state.resultValues, '결과 없음');
-      renderCheckPanel('typeChecks', typeValues, state.typeValues, '전형명 없음');
-    }
-
-    function chartOrMessage(canvasId) {
-      if (window.Chart) return true;
-      const canvas = $(canvasId);
-      canvas.replaceWith(Object.assign(document.createElement('div'), { className: 'empty', textContent: '차트를 불러오지 못했습니다.' }));
-      return false;
-    }
-
-    function makeChart(key, canvasId, config) {
-      if (!chartOrMessage(canvasId)) return;
-      if (charts[key]) charts[key].destroy();
-      charts[key] = new Chart($(canvasId), config);
-    }
-
-    function universityStats(rows) {
-      const stats = new Map();
-      rows.filter(row => row.univ).forEach(row => {
-        if (!stats.has(row.univ)) stats.set(row.univ, { univ: row.univ, total: 0, pass: 0, fail: 0, other: 0, rate: 0 });
-        const item = stats.get(row.univ);
-        item.total += 1;
-        if (row.category === PASS) item.pass += 1;
-        else if (row.category === FAIL) item.fail += 1;
-        else item.other += 1;
-      });
-      return [...stats.values()].map(item => ({
-        ...item,
-        rate: item.total ? item.pass / item.total * 100 : 0
-      }));
-    }
-
-    function renderUniversityBarChart(key, canvasId, items, label, valueKey, color, suffix = '') {
-      makeChart(key, canvasId, {
-        type: 'bar',
-        data: { labels: items.map(item => item.univ), datasets: [{ label, data: items.map(item => item[valueKey]), backgroundColor: color }] },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          resizeDelay: 120,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const item = items[ctx.dataIndex];
-                  const value = valueKey === 'rate' ? `${item.rate.toFixed(1)}%` : `${item[valueKey].toLocaleString('ko-KR')}건`;
-                  return `${value} · 지원 ${item.total.toLocaleString('ko-KR')}건 · 합격 ${item.pass.toLocaleString('ko-KR')}건`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              max: valueKey === 'rate' ? 100 : undefined,
-              ticks: { callback: value => `${value}${suffix}`, precision: 0 }
-            }
-          }
+        if (ruleEl) {
+          ruleEl.textContent = `${checkedCount}/${limit} 선택`;
         }
+
+        inputs.forEach(input => {
+          const locked = isFull && !input.checked;
+          input.disabled = locked;
+          input.closest(".course")?.classList.toggle("limit-locked", locked);
+        });
       });
     }
 
-    function renderUniversityOverview(rows) {
-      const stats = universityStats(rows);
-      const topApplied = [...stats].sort((a, b) => b.total - a.total || b.pass - a.pass).slice(0, 12).reverse();
-      const topPassed = [...stats].filter(item => item.pass > 0).sort((a, b) => b.pass - a.pass || b.total - a.total).slice(0, 12).reverse();
-      const topRate = [...stats].filter(item => item.total >= 3 && item.pass > 0).sort((a, b) => b.rate - a.rate || b.pass - a.pass || b.total - a.total).slice(0, 12).reverse();
-      renderUniversityBarChart('univApply', 'univApplyChart', topApplied, '지원 건수', 'total', COLORS.blue);
-      renderUniversityBarChart('univ', 'univChart', topPassed, '합격자 수', 'pass', COLORS.pass);
-      renderUniversityBarChart('univRate', 'univRateChart', topRate, '합격률', 'rate', COLORS.pass, '%');
-    }
-
-    function renderGpaChart(rows) {
-      const categories = [PASS, FAIL, OTHER];
-      const points = rows.filter(row => typeof row.gpa === 'number').map((row, index) => {
-        const x = Math.max(0, categories.indexOf(row.category));
-        return { x: x + ((index % 9) - 4) * 0.025, y: row.gpa, row };
-      });
-      makeChart('gpa', 'gpaChart', {
-        type: 'scatter',
-        data: {
-          datasets: categories.map((category) => ({
-            label: category,
-            data: points.filter(p => p.row.category === category),
-            backgroundColor: categoryColor(category),
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }))
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          resizeDelay: 120,
-          onClick: (event, elements, chart) => {
-            if (!elements.length) return;
-            const element = elements[0];
-            const point = chart.data.datasets[element.datasetIndex].data[element.index];
-            if (point && point.row) selectStudent(point.row.anon_id);
-          },
-          onHover: (event, elements) => {
-            event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                title: items => {
-                  const row = items[0]?.raw?.row || {};
-                  return `${row.anon_id || '익명 ID 없음'} · ${row.category || ''}`;
-                },
-                label: ctx => {
-                  const row = ctx.raw.row;
-                  const gpa = row.gpa_text && row.gpa_text !== '-' ? row.gpa_text : ctx.raw.y;
-                  return [
-                    `내신: ${gpa}`,
-                    `지원학과: ${row.dept || '-'}`,
-                    `대학: ${row.univ || '-'}`,
-                    `결과: ${row.final_result || row.category || '-'}`
-                  ];
-                }
-              }
-            }
-          },
-          scales: {
-            x: { min: -0.5, max: 2.5, ticks: { callback: value => categories[value] || '' } },
-            y: { reverse: true, min: 1, max: 9, ticks: { callback: value => `${value}등급` } }
-          }
+    function handleCourseChange(event) {
+      const input = event.target;
+      const groupEl = input.closest(".group[data-limit]");
+      if (input.checked && groupEl) {
+        const limit = groupLimit(groupEl);
+        const checked = groupInputs(groupEl).filter(item => item.checked);
+        if (limit && checked.length > limit) {
+          input.checked = false;
         }
-      });
-    }
-
-    function renderDonut(rows) {
-      const m = computeMetrics(rows);
-      makeChart('donut', 'donutChart', {
-        type: 'doughnut',
-        data: { labels: [PASS, FAIL, OTHER], datasets: [{ data: [m.passed, m.failed, m.other], backgroundColor: [COLORS.pass, COLORS.fail, COLORS.other] }] },
-        options: { responsive: true, maintainAspectRatio: false, resizeDelay: 120, cutout: '62%' }
-      });
-    }
-
-    function renderTable(rows) {
-      const table = $('resultTable');
-      const columns = [
-        ['year', '학년'],
-        ['anon_id', '익명 ID'],
-        ['univ', '대학'],
-        ['period', '모집시기'],
-        ['dept', '모집단위'],
-        ['type_group', '전형유형'],
-        ['type_name', '전형명'],
-        ['gpa_text', '전과목'],
-        ['first_result', '1단계'],
-        ['final_result', '최종'],
-        ['category', '합격분류']
-      ];
-      table.innerHTML = `<thead><tr>${columns.map(([key, label]) => `<th data-key="${key}">${escapeHtml(label)}</th>`).join('')}</tr></thead>` +
-        `<tbody>${rows.map(row => `<tr data-student="${escapeHtml(row.anon_id)}">${columns.map(([key]) => {
-          if (key === 'category') return `<td><span class="badge ${categoryClass(row.category)}">${escapeHtml(row.category)}</span></td>`;
-          return `<td>${escapeHtml(row[key])}</td>`;
-        }).join('')}</tr>`).join('')}</tbody>`;
-      table.querySelectorAll('th').forEach(th => {
-        th.addEventListener('click', () => {
-          const key = th.dataset.key;
-          if (state.sortKey === key) state.sortDir *= -1;
-          else { state.sortKey = key; state.sortDir = 1; }
-          refreshTableOnly();
-        });
-      });
-      table.querySelectorAll('tbody tr').forEach(tr => {
-        tr.addEventListener('click', () => {
-          selectStudent(tr.dataset.student);
-        });
-      });
-    }
-
-    function updateStudentOptions(rows) {
-      const students = uniq(rows.map(row => row.anon_id));
-      const select = $('studentSelect');
-      const current = select.value;
-      select.innerHTML = '<option value="">선택하세요</option>' + students.map(id => `<option value="${escapeHtml(id)}">${escapeHtml(id)}</option>`).join('');
-      if (students.includes(current)) select.value = current;
-      renderStudent();
-    }
-
-    function selectStudent(anonId) {
-      const select = $('studentSelect');
-      const targetId = clean(anonId);
-      if (!targetId) return;
-      if (![...select.options].some(option => option.value === targetId)) {
-        select.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(targetId)}">${escapeHtml(targetId)}</option>`);
       }
-      select.value = targetId;
-      renderStudent();
-      const panel = document.querySelector('.student-panel');
-      if (panel && window.innerWidth < 980) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      update();
     }
 
-    function renderStudent() {
-      const selected = $('studentSelect').value;
-      const target = $('studentDetail');
-      if (!selected) {
-        target.innerHTML = '<div class="empty">선택된 학생이 없습니다.</div>';
-        return;
-      }
-      const rows = DATA.rows.filter(row => row.anon_id === selected);
-      if (!rows.length) {
-        target.innerHTML = '<div class="empty">학생 데이터가 없습니다.</div>';
-        return;
-      }
-      const first = rows[0];
-      const years = uniq(rows.map(row => row.year));
-      const passedCount = rows.filter(row => row.category === PASS).length;
-      const failedCount = rows.filter(row => row.category === FAIL).length;
-      const otherCount = rows.length - passedCount - failedCount;
-      const gradeTiles = DATA.grade_keys.map(key => [key, first[key] || '-']);
-      const suneung = DATA.suneung_items[selected]?.length ? DATA.suneung_items[selected] : [['수능', '-']];
-      const tile = ([label, value]) => `<div class="summary-tile"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div></div>`;
-      const suneungTile = ([label, value]) => `<div class="suneung-row"><div class="suneung-label">${escapeHtml(label)}</div><div class="suneung-value">${escapeHtml(value)}</div></div>`;
-      const cards = [...rows].sort((a, b) => {
-        const order = { [PASS]: 0, [FAIL]: 1, [OTHER]: 2 };
-        return clean(b.year).localeCompare(clean(a.year), 'ko') || (order[a.category] ?? 9) - (order[b.category] ?? 9) || clean(a.univ).localeCompare(clean(b.univ), 'ko');
-      }).map(row => {
-        const meta = [
-          row.type_group && `유형 ${row.type_group}`,
-          row.type_name && `전형 ${row.type_name}`,
-          row.type_detail && `세부 ${row.type_detail}`,
-          row.gpa_text && row.gpa_text !== '-' && `내신 ${row.gpa_text}`,
-          row.first_result && `1단계 ${row.first_result}`,
-          row.final_result && `최종 ${row.final_result}`,
-          row.wait && `예비 ${row.wait}`,
-          row.register && `등록 ${row.register}`
-        ].filter(Boolean).join(' · ') || '추가 정보 없음';
-        const yearBadge = row.year ? `<span class="application-year">${escapeHtml(row.year)}학년도</span>` : '';
-        const periodText = row.period ? ` · ${escapeHtml(row.period)}` : '';
-        return `<div class="application-card" style="border-left-color:${categoryColor(row.category)}"><div class="application-title"><div class="application-title-main">${yearBadge}${escapeHtml(row.univ || '-')}${row.dept ? ' · ' + escapeHtml(row.dept) : ''}</div><span class="badge ${categoryClass(row.category)}">${escapeHtml(row.category)}</span></div><div class="application-meta">${periodText ? escapeHtml(row.period) + ' · ' : ''}${escapeHtml(meta)}</div></div>`;
-      }).join('');
-      target.innerHTML = `
-        <section class="student-summary">
-          <div class="student-summary-title">
-            <span>${escapeHtml(selected)}</span>
-            <span class="year-badges">${years.map(year => `<span class="year-badge">${escapeHtml(year)}학년도</span>`).join('')}</span>
-          </div>
-          <div class="student-kpis">
-            <div class="student-kpi"><div class="student-kpi-label">지원</div><div class="student-kpi-value">${rows.length.toLocaleString('ko-KR')}건</div></div>
-            <div class="student-kpi"><div class="student-kpi-label">합격</div><div class="student-kpi-value" style="color:${COLORS.pass}">${passedCount.toLocaleString('ko-KR')}건</div></div>
-            <div class="student-kpi"><div class="student-kpi-label">불합격</div><div class="student-kpi-value" style="color:${COLORS.fail}">${failedCount.toLocaleString('ko-KR')}건</div></div>
-            <div class="student-kpi"><div class="student-kpi-label">기타</div><div class="student-kpi-value">${otherCount.toLocaleString('ko-KR')}건</div></div>
-          </div>
-          <div class="summary-sections">
-            <div class="summary-section"><div class="score-section-title">내신</div><div class="summary-grid">${gradeTiles.map(tile).join('')}</div></div>
-            <div class="summary-section summary-section-suneung"><div class="score-section-title">수능</div><div class="suneung-grid">${suneung.map(suneungTile).join('')}</div></div>
-          </div>
-        </section>
-        <div class="application-list-title"><h3>지원 목록</h3><span class="application-list-count">${years.join(', ')} · ${rows.length.toLocaleString('ko-KR')}건</span></div>
-        ${cards}
+    function upperTechLangCourses(selected) {
+      return selected.filter(course => {
+        const upper = course.area === "기술∙가정/정보" || course.area === "제2외국어/한문";
+        return upper;
+      });
+    }
+
+    function creditScoreHtml(value, target, requiredNote = "") {
+      const noteLabel = requiredNote ? ` (${requiredNote})` : "";
+      const noteHtml = requiredNote ? `<span class="score-note">${requiredNote}</span>` : "";
+      return `
+        <span class="area-score" aria-label="실제 이수학점 ${value}학점, 필수이수학점 ${target}학점${noteLabel}">
+          <span class="score-piece actual"><span class="score-label">이수</span><span class="score-value actual">${value}학점</span></span>
+          <span class="score-piece required"><span class="score-label">필수</span><span class="score-value required">${target}학점</span>${noteHtml}</span>
+        </span>
       `;
     }
 
-    function findHeaderIndex(sheetRows) {
-      const keywords = ['학년', '이름', '대학', '대학명', '모집단위', '최종', '최종단계'];
-      let bestIndex = 0;
-      let bestScore = -1;
-      sheetRows.slice(0, 30).forEach((row, index) => {
-        const rowText = row.map(compactText).join(' ');
-        const score = keywords.filter(keyword => rowText.includes(compactText(keyword))).length;
-        const nonEmpty = row.filter(value => clean(value)).length;
-        if (score > bestScore || (score === bestScore && nonEmpty > 0 && index < bestIndex)) {
-          bestIndex = index;
-          bestScore = score;
+    function renderAreas(sums, selected) {
+      areaProgress.innerHTML = "";
+      Object.entries(REQUIRED).forEach(([area, target]) => {
+        const value = sums[area] || 0;
+        const pct = Math.min(100, Math.round(value / target * 100));
+        const ok = value >= target;
+        const row = document.createElement("div");
+        row.className = `area-row ${ok ? "sufficient" : "insufficient"}`;
+        row.innerHTML = `
+          <div class="area-top">
+            <span class="area-name">${area}</span>
+            ${creditScoreHtml(value, target)}
+          </div>
+          <div class="bar" style="--bar:${AREA_COLORS[area]}"><span style="width:${pct}%"></span></div>
+        `;
+        areaProgress.appendChild(row);
+      });
+
+      const techLangCourses = upperTechLangCourses(selected);
+      const techLangCredits = techLangCourses.reduce((sum, course) => sum + course.credits, 0);
+      const techLangTarget = 12;
+      const techLangOk = techLangCredits >= techLangTarget;
+      const techLangRow = document.createElement("div");
+      techLangRow.className = `area-row ${techLangOk ? "sufficient" : "insufficient"}`;
+      techLangRow.innerHTML = `
+        <div class="area-top">
+          <span class="area-name">기술·가정/정보 + 제2외국어/한문</span>
+          ${creditScoreHtml(techLangCredits, techLangTarget, "교양 제외")}
+        </div>
+        <div class="bar" style="--bar:#6b7280"><span style="width:${Math.min(100, Math.round(techLangCredits / techLangTarget * 100))}%"></span></div>
+      `;
+      areaProgress.appendChild(techLangRow);
+    }
+
+    function renderPriorityRules(sums) {
+      const koreanMathEnglish = (sums["국어"] || 0) + (sums["수학"] || 0) + (sums["영어"] || 0);
+
+      const priorityRules = [
+        {
+          title: "국어+수학+영어 합계",
+          detail: `${koreanMathEnglish}/81학점 이하`,
+          state: koreanMathEnglish <= 81 ? "ok" : "bad"
         }
-      });
-      return bestIndex;
-    }
-
-    function makeUniqueHeaders(values) {
-      const counts = new Map();
-      return values.map((value) => {
-        const base = clean(value).trim() || '빈칸';
-        const count = counts.get(base) || 0;
-        counts.set(base, count + 1);
-        return count ? `${base}_${count}` : base;
-      });
-    }
-
-    function findUploadColumn(headers, keywords, exact = false) {
-      const targets = keywords.map(compactText);
-      for (const header of headers) {
-        const base = compactText(clean(header).split('_')[0]);
-        if (targets.includes(base)) return header;
-      }
-      if (exact) return '';
-      for (const header of headers) {
-        const base = compactText(clean(header).split('_')[0]);
-        if (targets.some(keyword => base.includes(keyword))) return header;
-      }
-      return '';
-    }
-
-    function uploadColumnMap(headers) {
-      return {
-        year: findUploadColumn(headers, ['학년'], true),
-        class: findUploadColumn(headers, ['반'], true),
-        number: findUploadColumn(headers, ['번호'], true),
-        hakbun: findUploadColumn(headers, ['학번', '수험번호']),
-        name: findUploadColumn(headers, ['이름', '성명']),
-        univ: findUploadColumn(headers, ['대학명', '대학']),
-        period: findUploadColumn(headers, ['모집시기', '지원시기']),
-        type_group: findUploadColumn(headers, ['전형유형']),
-        type_name: findUploadColumn(headers, ['전형', '전형명']),
-        type_detail: findUploadColumn(headers, ['세부유형', '세부전형']),
-        dept: findUploadColumn(headers, ['모집단위', '학과', '전공']),
-        first_result: findUploadColumn(headers, ['1단계']),
-        final_result: findUploadColumn(headers, ['최종단계', '최종']),
-        wait: findUploadColumn(headers, ['후보순위', '예비', '후보']),
-        register: findUploadColumn(headers, ['등록여부', '등록']),
-        gpa: findUploadColumn(headers, ['전교과', '전과목']),
-        gpa_core: findUploadColumn(headers, ['국영수사/과', '국수영사/과', '국영수사과', '국수영사과', '국수영사']),
-        comment: findUploadColumn(headers, ['학생코멘트', '학년코멘트', '주요사항'])
-      };
-    }
-
-    function uploadCategory(value) {
-      const valueText = compactText(value);
-      if (!valueText) return OTHER;
-      if (valueText === 'X' || valueText.includes('불합') || valueText.includes('탈락') || valueText.includes('미달')) return FAIL;
-      if (valueText === 'O' || valueText.includes('합격') || valueText.includes('충원') || valueText.includes('등록')) return PASS;
-      if (valueText.includes('예비')) return OTHER;
-      return OTHER;
-    }
-
-    function uploadNumber(value) {
-      const n = Number(clean(value).replace(/,/g, ''));
-      return Number.isFinite(n) ? n : null;
-    }
-
-    function uploadGradeText(value) {
-      const n = uploadNumber(value);
-      return n === null ? (clean(value) || '-') : n.toFixed(2);
-    }
-
-    function uploadDisplayNumber(value) {
-      const n = uploadNumber(value);
-      if (n === null) return clean(value);
-      return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2)));
-    }
-
-    function uploadGradeSuffix(value) {
-      const valueText = uploadDisplayNumber(value);
-      if (!valueText) return '';
-      return valueText.includes('등급') ? valueText : `${valueText}등급`;
-    }
-
-    function uploadNormalizeUniv(value) {
-      let valueText = clean(value).replace(/\s+/g, '');
-      valueText = valueText.replace(/\((서울|성남|죽전|천안|청주|익산|안양|고양|대전|수원|인천|대구|부산|춘천|포천|경기도광주)\)/g, '');
-      if (valueText.endsWith('대학교대학교')) valueText = valueText.replace(/대학교대학교$/, '대학교');
-      return valueText;
-    }
-
-    function uploadYearFromFile(fileName) {
-      const match = clean(fileName).match(/(20\d{2})\s*학년도?/);
-      return match ? match[1] : '';
-    }
-
-    function uploadStudentBases(row, cols) {
-      const hakbun = clean(row[cols.hakbun]);
-      const classNumberName = [row[cols.class], row[cols.number], row[cols.name]].map(clean).join('|');
-      const name = clean(row[cols.name]);
-      return [hakbun, classNumberName, name].filter(value => value && value.replace(/\|/g, ''));
-    }
-
-    function uploadStudentKey(row, cols, forcedYear = '') {
-      const year = forcedYear || clean(row[cols.year]) || '연도미상';
-      const bases = uploadStudentBases(row, cols);
-      const base = bases[0] || '';
-      return { year, key: `${year}|${base}`, bases };
-    }
-
-    function buildAnonIds(objects, cols, forcedYear = '') {
-      const keysByYear = new Map();
-      const rowKeys = objects.map(row => {
-        const studentKey = uploadStudentKey(row, cols, forcedYear);
-        const year = studentKey.year;
-        const key = studentKey.bases[0] || '';
-        if (!key) return null;
-        if (!keysByYear.has(year)) keysByYear.set(year, new Set());
-        keysByYear.get(year).add(key);
-        return [year, key];
-      });
-      const labels = new Map();
-      [...keysByYear.keys()].sort().forEach(year => {
-        [...keysByYear.get(year)].sort((a, b) => a.localeCompare(b, 'ko')).forEach((key, index) => {
-          labels.set(`${year}|${key}`, `${year} 학생 ${String(index + 1).padStart(3, '0')}`);
-        });
-      });
-      let unknown = 1;
-      return rowKeys.map(rowKey => {
-        if (!rowKey) return `연도미상 학생 미상 ${String(unknown++).padStart(3, '0')}`;
-        return labels.get(`${rowKey[0]}|${rowKey[1]}`);
-      });
-    }
-
-    function uploadGradeColumns(headers) {
-      const candidates = [
-        ['전교과', ['전교과', '전과목']],
-        ['국수영사과', ['국영수사/과', '국수영사/과', '국영수사과', '국수영사과']],
-        ['국수영과', ['국영수과', '국수영과']],
-        ['국수영사', ['국영수사', '국수영사']]
       ];
-      return candidates.map(([label, names]) => [label, findUploadColumn(headers, names)]).filter(item => item[1]);
-    }
 
-    function uploadColumnIndex(headers, start, names) {
-      const targets = names.map(compactText);
-      for (let index = Math.max(0, start); index < headers.length; index += 1) {
-        const base = compactText(clean(headers[index]).split('_')[0]);
-        if (targets.includes(base)) return index;
-      }
-      return -1;
-    }
-
-    function uploadSuneungGroup(row, headers, index, hasSubject) {
-      if (index < 0) return '';
-      const values = [0, 1, 2, 3].map(offset => clean(row[headers[index + offset]]));
-      if (!hasSubject) return uploadGradeSuffix(values[0]);
-      const subject = values[0];
-      const standard = uploadDisplayNumber(values[1]);
-      const percentile = uploadDisplayNumber(values[2]);
-      const grade = uploadGradeSuffix(values[3]);
-      const base = [subject, grade].filter(Boolean).join(' ');
-      const detail = [
-        percentile ? `백분위 ${percentile}` : '',
-        standard ? `표점 ${standard}` : ''
-      ].filter(Boolean).join(', ');
-      return base && detail ? `${base} (${detail})` : base;
-    }
-
-    function uploadSuneungItems(row, headers) {
-      const history = uploadColumnIndex(headers, 0, ['한국사']);
-      if (history < 0) return [];
-      const kor = uploadColumnIndex(headers, history + 1, ['국어']);
-      const math = uploadColumnIndex(headers, Math.max(kor, history) + 1, ['수학']);
-      const eng = uploadColumnIndex(headers, Math.max(math, history) + 1, ['영어']);
-      const tamgu1 = uploadColumnIndex(headers, Math.max(eng, history) + 1, ['탐구1']);
-      const tamgu2 = uploadColumnIndex(headers, Math.max(tamgu1, history) + 1, ['탐구2']);
-      const second = uploadColumnIndex(headers, Math.max(tamgu2, history) + 1, ['제2외국어']);
-      return [
-        ['한국사', uploadSuneungGroup(row, headers, history, false)],
-        ['국어', uploadSuneungGroup(row, headers, kor, true)],
-        ['수학', uploadSuneungGroup(row, headers, math, true)],
-        ['영어', uploadSuneungGroup(row, headers, eng, false)],
-        ['탐구1', uploadSuneungGroup(row, headers, tamgu1, true)],
-        ['탐구2', uploadSuneungGroup(row, headers, tamgu2, true)],
-        ['제2외국어', uploadSuneungGroup(row, headers, second, true)]
-      ].filter(item => item[1]);
-    }
-
-    function payloadFromWorkbook(workbook, fileName) {
-      const fileYear = uploadYearFromFile(fileName);
-      const sheetName = workbook.SheetNames.find(name => XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: '' }).some(row => row.some(value => clean(value)))) || workbook.SheetNames[0];
-      const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
-      const headerIndex = findHeaderIndex(sheetRows);
-      const headers = makeUniqueHeaders(sheetRows[headerIndex] || []);
-      const objects = sheetRows.slice(headerIndex + 1).map(row => {
-        const item = {};
-        headers.forEach((header, index) => item[header] = clean(row[index]).replace(/\n/g, ' ').trim());
-        return item;
-      }).filter(row => Object.values(row).some(value => clean(value)));
-      const cols = uploadColumnMap(headers);
-      const signal = [cols.univ, cols.dept, cols.type_name, cols.first_result, cols.final_result].filter(Boolean);
-      const sourceRows = signal.length ? objects.filter(row => signal.some(col => clean(row[col]))) : objects;
-      const anonIds = buildAnonIds(sourceRows, cols, fileYear);
-      const grades = uploadGradeColumns(headers);
-      const privateCols = new Set([cols.name, cols.hakbun, cols.class, cols.number].filter(Boolean));
-      const skip = new Set([cols.year, cols.univ, cols.period, cols.dept, cols.type_group, cols.type_name, cols.type_detail, cols.gpa, cols.gpa_core, cols.first_result, cols.final_result, cols.wait, cols.register, cols.comment, ...privateCols].filter(Boolean));
-      const rows = sourceRows.map((source, index) => {
-        const row = {
-          year: fileYear || clean(source[cols.year]),
-          anon_id: anonIds[index],
-          univ: uploadNormalizeUniv(source[cols.univ]),
-          period: clean(source[cols.period]),
-          dept: clean(source[cols.dept]),
-          type_group: clean(source[cols.type_group]),
-          type_name: clean(source[cols.type_name]),
-          type_detail: clean(source[cols.type_detail]),
-          gpa: uploadNumber(source[cols.gpa]),
-          gpa_text: uploadGradeText(source[cols.gpa]),
-          gpa_core: clean(source[cols.gpa_core]),
-          first_result: clean(source[cols.first_result]),
-          final_result: clean(source[cols.final_result]),
-          category: uploadCategory(source[cols.final_result]),
-          wait: clean(source[cols.wait]),
-          register: clean(source[cols.register]),
-          comment: clean(source[cols.comment])
-        };
-        grades.forEach(([label, col]) => row[label] = uploadGradeText(source[col]));
-        headers.forEach(header => {
-          const name = clean(header);
-          if (!skip.has(header) && name && !name.startsWith('_') && !compactText(name).startsWith('빈칸')) row[name] = clean(source[header]);
-        });
-        return row;
+      priorityStatus.innerHTML = "";
+      priorityRules.forEach(rule => {
+        const el = document.createElement("div");
+        el.className = `priority-card ${rule.state}`;
+        const mark = rule.state === "ok" ? "✓" : "×";
+        el.innerHTML = `
+          <span class="status">${mark}</span>
+          <span><strong>${rule.title}</strong><small>${rule.detail}</small></span>
+        `;
+        priorityStatus.appendChild(el);
       });
-      const firstByStudent = new Map();
-      const matchKeys = {};
-      sourceRows.forEach((row, index) => {
-        if (!firstByStudent.has(anonIds[index])) firstByStudent.set(anonIds[index], row);
-        if (!matchKeys[anonIds[index]]) matchKeys[anonIds[index]] = uploadStudentKey(row, cols, fileYear);
+    }
+
+    document.getElementById("clearElectives").addEventListener("click", () => {
+      root.querySelectorAll("input[type='checkbox']:not(:disabled)").forEach(input => {
+        input.checked = false;
       });
-      const suneungItems = {};
-      for (const [anonId, row] of firstByStudent.entries()) {
-        suneungItems[anonId] = uploadSuneungItems(row, headers);
-      }
-      return {
-        rows,
-        years: uniq(rows.map(row => row.year)),
-        univs: uniq(rows.map(row => row.univ)),
-        students: uniq(rows.map(row => row.anon_id)),
-        grade_keys: grades.map(item => item[0]),
-        suneung_items: suneungItems,
-        match_keys: matchKeys,
-        metadata: {
-          result_file: fileName,
-          row_count: rows.length,
-          created_at: new Date().toLocaleString('ko-KR')
-        },
-        colors: DATA.colors || { pass: COLORS.pass, fail: COLORS.fail, other: COLORS.other }
-      };
-    }
+      update();
+    });
 
-    function mergePayloads(payloads) {
-      const rows = [];
-      const suneungItems = {};
-      const matchKeys = {};
-      const gradeKeys = [];
-      const keyToAnon = new Map();
-      const counters = new Map();
+    document.getElementById("downloadJson").addEventListener("click", downloadSelectionJson);
+    document.getElementById("downloadPdf").addEventListener("click", printSelectionPdf);
+    jsonInput.addEventListener("change", restoreSelectionJson);
 
-      function nextAnon(year) {
-        const labelYear = year || '연도미상';
-        const count = (counters.get(labelYear) || 0) + 1;
-        counters.set(labelYear, count);
-        return `${labelYear} 학생 ${String(count).padStart(3, '0')}`;
-      }
+    excelInput.addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-      for (const payload of payloads) {
-        (payload.grade_keys || []).forEach(key => {
-          if (key && !gradeKeys.includes(key)) gradeKeys.push(key);
-        });
-        const localToGlobal = {};
-        for (const [localAnon, info] of Object.entries(payload.match_keys || {})) {
-          const year = info.year || '';
-          const key = info.key || `${year}|${localAnon}`;
-          if (!keyToAnon.has(key)) keyToAnon.set(key, nextAnon(year));
-          const globalAnon = keyToAnon.get(key);
-          localToGlobal[localAnon] = globalAnon;
-          if (!matchKeys[globalAnon]) matchKeys[globalAnon] = info;
-          else {
-            const mergedBases = new Set([...(matchKeys[globalAnon].bases || []), ...(info.bases || [])]);
-            matchKeys[globalAnon] = { ...matchKeys[globalAnon], ...info, bases: [...mergedBases] };
-          }
-        }
-        (payload.rows || []).forEach(row => {
-          const globalAnon = localToGlobal[row.anon_id] || row.anon_id;
-          rows.push({ ...row, anon_id: globalAnon });
-        });
-        for (const [localAnon, items] of Object.entries(payload.suneung_items || {})) {
-          const globalAnon = localToGlobal[localAnon] || localAnon;
-          if ((!suneungItems[globalAnon] || !suneungItems[globalAnon].length) && items && items.length) {
-            suneungItems[globalAnon] = items;
-          }
-        }
-      }
-
-      return {
-        rows,
-        years: uniq(rows.map(row => row.year)),
-        univs: uniq(rows.map(row => row.univ)),
-        students: uniq(rows.map(row => row.anon_id)),
-        grade_keys: gradeKeys,
-        suneung_items: suneungItems,
-        match_keys: matchKeys,
-        metadata: {
-          result_file: payloads.map(payload => payload.metadata?.result_file).filter(Boolean).join(', '),
-          row_count: rows.length,
-          created_at: new Date().toLocaleString('ko-KR')
-        },
-        colors: DATA.colors || { pass: COLORS.pass, fail: COLORS.fail, other: COLORS.other }
-      };
-    }
-
-    function appendPayloads(payloads) {
-      const rows = [...(DATA.rows || [])];
-      const suneungItems = { ...(DATA.suneung_items || {}) };
-      const matchKeys = JSON.parse(JSON.stringify(DATA.match_keys || {}));
-      const gradeKeys = [...(DATA.grade_keys || [])];
-      const keyToAnon = new Map();
-      const counters = new Map();
-
-      for (const [anonId, info] of Object.entries(matchKeys)) {
-        const year = info.year || clean((DATA.rows || []).find(row => row.anon_id === anonId)?.year) || '연도미상';
-        const key = info.key || `${year}|${anonId}`;
-        keyToAnon.set(key, anonId);
-        counters.set(year, (counters.get(year) || 0) + 1);
-      }
-      if (!Object.keys(matchKeys).length) {
-        uniq((DATA.rows || []).map(row => row.anon_id)).forEach(anonId => {
-          const year = clean((DATA.rows || []).find(row => row.anon_id === anonId)?.year) || '연도미상';
-          counters.set(year, (counters.get(year) || 0) + 1);
-        });
-      }
-
-      function nextAnon(year) {
-        const labelYear = year || '연도미상';
-        const count = (counters.get(labelYear) || 0) + 1;
-        counters.set(labelYear, count);
-        return `${labelYear} 학생 ${String(count).padStart(3, '0')}`;
-      }
-
-      for (const payload of payloads) {
-        (payload.grade_keys || []).forEach(key => {
-          if (key && !gradeKeys.includes(key)) gradeKeys.push(key);
-        });
-        const localToGlobal = {};
-        for (const [localAnon, info] of Object.entries(payload.match_keys || {})) {
-          const year = info.year || '';
-          const key = info.key || `${year}|${localAnon}`;
-          if (!keyToAnon.has(key)) keyToAnon.set(key, nextAnon(year));
-          const globalAnon = keyToAnon.get(key);
-          localToGlobal[localAnon] = globalAnon;
-          if (!matchKeys[globalAnon]) matchKeys[globalAnon] = info;
-          else {
-            const mergedBases = new Set([...(matchKeys[globalAnon].bases || []), ...(info.bases || [])]);
-            matchKeys[globalAnon] = { ...matchKeys[globalAnon], ...info, bases: [...mergedBases] };
-          }
-        }
-        (payload.rows || []).forEach(row => {
-          const globalAnon = localToGlobal[row.anon_id] || row.anon_id;
-          rows.push({ ...row, anon_id: globalAnon });
-        });
-        for (const [localAnon, items] of Object.entries(payload.suneung_items || {})) {
-          const globalAnon = localToGlobal[localAnon] || localAnon;
-          if ((!suneungItems[globalAnon] || !suneungItems[globalAnon].length) && items && items.length) {
-            suneungItems[globalAnon] = items;
-          }
-        }
-      }
-
-      const existingFiles = clean(DATA.metadata?.result_file)
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean);
-      const nextFiles = payloads.map(payload => payload.metadata?.result_file).filter(Boolean);
-      const resultFiles = [...new Set([...existingFiles, ...nextFiles])];
-
-      return {
-        rows,
-        years: uniq(rows.map(row => row.year)),
-        univs: uniq(rows.map(row => row.univ)),
-        students: uniq(rows.map(row => row.anon_id)),
-        grade_keys: gradeKeys,
-        suneung_items: suneungItems,
-        match_keys: matchKeys,
-        metadata: {
-          result_file: resultFiles.join(', '),
-          row_count: rows.length,
-          created_at: new Date().toLocaleString('ko-KR')
-        },
-        colors: DATA.colors || { pass: COLORS.pass, fail: COLORS.fail, other: COLORS.other }
-      };
-    }
-
-    function resetStateForData() {
-      state.years = new Set(DATA.years);
-      state.univ = '';
-      state.univQuery = '';
-      state.keyword = '';
-      state.resultValues.clear();
-      state.typeValues.clear();
-      state.sortKey = '';
-      state.sortDir = 1;
-      $('univSearchInput').value = '';
-      $('keywordInput').value = '';
-      $('univSelect').value = '';
-    }
-
-    async function handleExcelUpload(event) {
-      const files = [...(event.target.files || [])];
-      if (!files.length) return;
-      if (!window.XLSX) {
-        $('uploadStatus').textContent = '엑셀 읽기 라이브러리를 불러오지 못했습니다.';
-        return;
-      }
-      $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 엑셀을 읽는 중입니다.`;
       try {
-        const payloads = [];
-        const beforeCount = DATA.rows.length;
-        for (const file of files) {
-          const buffer = await file.arrayBuffer();
-          const workbook = XLSX.read(buffer, { type: 'array' });
-          payloads.push(payloadFromWorkbook(workbook, file.name));
+        if (!window.XLSX) {
+          throw new Error("엑셀 읽기 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.");
         }
-        DATA = appendPayloads(payloads);
-        resetStateForData();
-        const addedCount = DATA.rows.length - beforeCount;
-        $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 파일 추가 · ${addedCount.toLocaleString('ko-KR')}건 추가 · 총 ${DATA.rows.length.toLocaleString('ko-KR')}건`;
-        renderYearButtons();
-        renderUnivSuggestions();
-        renderUnivSelect();
-        refreshAll();
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        useImportedCourses(parseCurriculumWorkbook(workbook, file.name), file.name);
       } catch (error) {
-        console.error(error);
-        $('uploadStatus').textContent = '엑셀 파일을 읽지 못했습니다.';
+        notice.hidden = false;
+        notice.textContent = `엑셀 파일을 읽지 못했습니다. ${error.message}`;
+      } finally {
+        event.target.value = "";
       }
-    }
+    });
 
-    function downloadCsv() {
-      const columns = ['year','anon_id','univ','period','dept','type_group','type_name','type_detail','gpa_text','first_result','final_result','category','wait','register'];
-      const header = ['학년','익명 ID','대학','모집시기','모집단위','전형유형','전형명','세부유형','전과목','1단계','최종','합격분류','예비','등록'];
-      const lines = [header].concat(state.tableRows.map(row => columns.map(col => clean(row[col]))));
-      const csv = '\ufeff' + lines.map(values => values.map(value => `"${clean(value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = '진학결과_검색.csv';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function downloadCurrentHtml() {
-      const source = '<!doctype html>\n' + document.documentElement.outerHTML;
-      const blob = new Blob([source], { type: 'text/html;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = '진학결과_시각화.html';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function refreshTableOnly() {
-      const tableRows = tableFilteredRows();
-      renderTable(tableRows);
-      renderMetrics('searchMetrics', tableRows);
-      renderGpaChart(tableRows);
-      renderDonut(tableRows);
-      updateStudentOptions(tableRows);
-    }
-
-    function refreshAll() {
-      document.body.classList.toggle('empty-mode', DATA.rows.length === 0);
-      const yearRows = yearFilteredRows();
-      renderMetrics('overallMetrics', yearRows);
-      renderUniversityOverview(yearRows);
-      const searchedRows = searchFilteredRows();
-      syncFilterPanels(searchedRows);
-      refreshTableOnly();
-    }
-
-    function init() {
-      const meta = DATA.metadata || {};
-      const rowCount = Number(meta.row_count || 0);
-      setText($('metadata'), rowCount ? `${meta.result_file || ''} · ${rowCount.toLocaleString('ko-KR')}건 · ${meta.created_at || ''}` : '엑셀 파일을 넣어 진학 결과를 시각화합니다.');
-      renderYearButtons();
-      renderSelects();
-      refreshAll();
-    }
-
-    init();
+    yearSelect.addEventListener("change", render);
+    render();
   </script>
 </body>
 </html>
