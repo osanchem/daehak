@@ -70,6 +70,34 @@
       font-weight: 650;
     }
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .case-nav {
+      position: sticky;
+      top: 10px;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--apple-line);
+      border-radius: 12px;
+      padding: 10px;
+      margin: 0 0 16px;
+      box-shadow: var(--apple-shadow);
+      backdrop-filter: blur(18px);
+    }
+    .case-nav-button {
+      border-color: var(--apple-line);
+      color: var(--apple-text);
+      background: #fff;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+    }
+    .case-nav-button.active, .case-nav-button:hover {
+      border-color: var(--apple-blue);
+      color: var(--apple-blue);
+      background: #f5fbff;
+    }
     button, select, input {
       font: inherit;
       border-radius: 8px;
@@ -136,13 +164,47 @@
       padding: 18px;
       margin: 10px 0 18px;
     }
+    .upload-summary {
+      display: none;
+      grid-column: 1 / -1;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .upload-summary-title {
+      color: var(--apple-text);
+      font-weight: 720;
+    }
+    .upload-summary-meta {
+      color: var(--apple-muted);
+      font-size: 0.88rem;
+      margin-top: 3px;
+    }
+    .upload-toggle {
+      border-color: var(--apple-line);
+      color: var(--apple-blue);
+      background: #fff;
+      padding: 8px 12px;
+      white-space: nowrap;
+    }
+    .upload-panel.is-collapsed {
+      display: block;
+      padding: 12px 14px;
+    }
+    .upload-panel.is-collapsed .upload-summary { display: flex; }
+    .upload-panel.is-collapsed .upload-copy,
+    .upload-panel.is-collapsed .upload-fields { display: none; }
     body.empty-mode .upload-panel {
       max-width: 980px;
       margin: 28px auto 18px;
       padding: 22px;
       align-items: start;
     }
-    body:not(.empty-mode) .upload-panel { display: none; }
+    body.empty-mode .upload-panel .upload-summary { display: none; }
+    body:not(.empty-mode) .upload-panel {
+      grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+      margin-top: 0;
+    }
     body.empty-mode .analysis-panel, body.empty-mode .view-panel { display: none; }
     .upload-copy { min-width: 0; }
     .upload-title { font-size: 1.12rem; font-weight: 720; color: var(--apple-text); margin-bottom: 8px; }
@@ -150,7 +212,9 @@
     .local-download { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
     .local-download span { color: var(--apple-muted); font-size: 0.9rem; line-height: 1.45; }
     .file-picker { min-width: 0; }
+    .file-picker + .file-picker { margin-top: 10px; }
     .upload-panel input[type="file"] { padding: 8px; background: #fff; }
+    .upload-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
     .upload-status { color: var(--apple-muted); font-size: 0.86rem; text-align: right; overflow-wrap: anywhere; }
     .chart-box { height: 360px; min-height: 0; background: #fff; border: 1px solid var(--apple-line); border-radius: 12px; padding: 16px; overflow: hidden; box-shadow: none; }
     .chart-box canvas { display: block; width: 100% !important; height: 300px !important; max-height: 300px; }
@@ -301,6 +365,9 @@
     .student-kpi { border: 1px solid var(--apple-line); border-radius: 8px; background: #fff; padding: 8px 9px; min-width: 0; }
     .student-kpi-label { color: var(--apple-muted); font-size: 0.68rem; margin-bottom: 2px; white-space: nowrap; }
     .student-kpi-value { font-size: 1rem; font-weight: 720; line-height: 1.15; overflow-wrap: anywhere; }
+    .student-comment { border: 1px solid rgba(0,113,227,0.18); border-left: 4px solid var(--apple-blue); border-radius: 8px; background: #fff; padding: 11px 12px; margin-top: 12px; }
+    .student-comment-title { color: var(--apple-muted); font-size: 0.72rem; font-weight: 720; margin-bottom: 6px; }
+    .student-comment-body { color: var(--apple-text); font-size: 0.92rem; line-height: 1.62; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
     .summary-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
     .summary-section { border: 1px solid var(--apple-line); border-radius: 12px; background: #fff; padding: 10px; min-width: 0; overflow: hidden; }
     .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
@@ -380,6 +447,7 @@
       .student-modal { padding: 12px; align-items: flex-end; }
       .student-modal-dialog { max-height: calc(100vh - 24px); border-radius: 14px 14px 0 0; }
       .toolbar { justify-content: flex-start; }
+      .case-nav { position: static; }
       .upload-status { text-align: left; }
       .local-download { align-items: flex-start; }
     }
@@ -394,7 +462,7 @@
   <main class="page">
     <header>
       <div>
-        <h1>대교협 진학결과 시각화</h1>
+        <h1>졸업생 진학 사례 아카이브</h1>
         <div class="caption" id="metadata"></div>
         <div class="caption contact">문의: <a href="mailto:jinhak082@gmail.com">jinhak082@gmail.com</a></div>
         <div class="caption">update: 2026.06.05</div>
@@ -404,35 +472,55 @@
       <nav class="toolbar" id="yearButtons" aria-label="학년 필터"></nav>
     </header>
 
-    <section class="upload-panel" aria-label="엑셀 파일 시각화">
+    <nav class="case-nav" aria-label="졸업생 사례 탐색 흐름">
+      <button class="case-nav-button active" type="button" data-case-target="uploadPanel">자료 불러오기</button>
+      <button class="case-nav-button" type="button" data-case-target="overviewDetails" data-case-view="trend" data-case-tab="overall">전체 현황</button>
+      <button class="case-nav-button" type="button" data-case-target="studentSearchCard" data-case-view="student">사례 탐색</button>
+      <button class="case-nav-button" type="button" data-case-target="studentDetailPanel" data-case-view="student">졸업생 상세</button>
+      <button class="case-nav-button" type="button" data-case-target="overviewDetails" data-case-view="trend" data-case-tab="track">대학·계열 분석</button>
+      <button class="case-nav-button" type="button" data-case-target="studentDetailPanel" data-case-view="student">참고 코멘트</button>
+    </nav>
+
+    <section class="upload-panel" id="uploadPanel" aria-label="자료 불러오기">
+      <div class="upload-summary">
+        <div>
+          <div class="upload-summary-title">자료 불러오기</div>
+          <div class="upload-summary-meta" id="uploadSummaryMeta">자료가 불러와졌습니다.</div>
+        </div>
+        <button class="upload-toggle" id="uploadToggleButton" type="button" aria-expanded="false">펼치기</button>
+      </div>
       <div class="upload-copy">
-        <div class="upload-title">엑셀 파일을 넣어 진학 결과를 시각화합니다.</div>
+        <div class="upload-title">자료 불러오기</div>
         <ol class="upload-steps">
-          <li>상단의 파일 선택에서 진학결과 엑셀 파일을 선택합니다.</li>
-          <li>여러 파일을 한 번에 선택할 수 있습니다.</li>
-          <li>파일을 넣으면 차트, 검색, 학생별 조회 기능이 자동으로 열립니다.</li>
+          <li>졸업생 진학결과 엑셀 파일을 선택합니다.</li>
+          <li>졸업생별 참고 코멘트가 있으면 코멘트 엑셀 파일도 선택합니다.</li>
+          <li>두 파일을 고른 뒤 시각화 시작을 누릅니다.</li>
         </ol>
         <div class="local-download">
           <span>그럼에도 로컬 사용을 원하시면 HTML파일 다운로드를 눌러주세요.</span>
           <button class="secondary" id="htmlDownloadButton" type="button">HTML파일 다운로드</button>
         </div>
       </div>
-      <div>
-      <label class="file-picker">진학결과 엑셀 여러 개 시각화
+      <div class="upload-fields">
+      <label class="file-picker">진학결과 엑셀
         <input id="excelInput" type="file" accept=".xlsx,.xls" multiple>
       </label>
-      <div class="upload-status" id="uploadStatus">엑셀 파일을 선택하면 시각화됩니다.</div>
+      <label class="file-picker">참고 코멘트 엑셀
+        <input id="commentInput" type="file" accept=".xlsx,.xls" multiple>
+      </label>
+      <div class="upload-actions"><button class="primary" id="startUploadButton" type="button">시각화 시작</button></div>
+      <div class="upload-status" id="uploadStatus">결과 엑셀과 코멘트 엑셀을 선택한 뒤 시작합니다.</div>
       </div>
     </section>
 
     <section class="view-menu analysis-panel" aria-label="조회 방식 선택">
       <button class="view-button active" type="button" data-view="trend">
-        <span class="view-title">전체 경향성 보기</span>
-        <span class="view-subtitle">연도별 전체 흐름과 대학/지역/계열 분석을 봅니다.</span>
+        <span class="view-title">전체 현황</span>
+        <span class="view-subtitle">졸업생 전체 흐름과 대학·지역·계열 분포를 봅니다.</span>
       </button>
       <button class="view-button" type="button" data-view="student">
-        <span class="view-title">학생 개별보기</span>
-        <span class="view-subtitle">대학·전형 검색, 산점도, 익명 학생별 지원 목록을 봅니다.</span>
+        <span class="view-title">사례 탐색</span>
+        <span class="view-subtitle">조건 검색으로 유사 졸업생 사례와 상세 기록을 봅니다.</span>
       </button>
     </section>
 
@@ -440,7 +528,7 @@
       <details class="analysis-panel" id="overviewDetails" open>
         <summary>전체 현황</summary>
         <div class="tab-row" role="tablist" aria-label="전체 현황 분석">
-          <button class="tab-button active" type="button" data-overview-tab="overall">📊 전체</button>
+          <button class="tab-button active" type="button" data-overview-tab="overall">📊 전체 요약</button>
           <button class="tab-button" type="button" data-overview-tab="top15">🏫 주요대학</button>
           <button class="tab-button" type="button" data-overview-tab="region">🗺️ 지역별</button>
           <button class="tab-button" type="button" data-overview-tab="track">📚 계열별</button>
@@ -479,7 +567,7 @@
               <div class="track-detail-count" id="top15DetailCount"></div>
             </div>
             <details class="analysis-collapse">
-              <summary>학생 목록</summary>
+              <summary>졸업생 목록</summary>
               <div class="table-wrap"><table id="top15StudentTable"></table></div>
             </details>
           </div>
@@ -511,7 +599,7 @@
               <div class="track-detail-count" id="trackDetailCount"></div>
             </div>
             <details class="analysis-collapse">
-              <summary>학생 목록</summary>
+              <summary>졸업생 목록</summary>
               <div class="table-wrap"><table id="trackStudentTable"></table></div>
             </details>
           </div>
@@ -521,8 +609,8 @@
     </section>
 
     <section class="view-panel student-view" data-view-panel="student">
-      <article class="section student-search-card">
-        <h2>대학·전형 검색</h2>
+      <article class="section student-search-card" id="studentSearchCard">
+        <h2>사례 탐색</h2>
         <div class="controls">
           <label>대학명 검색
             <input id="univSearchInput" type="search" list="univSuggestions" placeholder="대학명 일부 입력">
@@ -532,7 +620,7 @@
             <select id="univSelect"></select>
           </label>
           <label>키워드
-            <input id="keywordInput" type="search" placeholder="학과, 전형명, 결과">
+            <input id="keywordInput" type="search" placeholder="학과, 전형명, 합격 결과">
           </label>
         </div>
         <div class="metrics" id="searchMetrics"></div>
@@ -559,7 +647,7 @@
             </div>
           </div>
           <div>
-            <div class="panel-title">전형명 필터</div>
+            <div class="panel-title">전형 구분</div>
             <div class="filter-menu" data-filter-menu="type">
               <button class="filter-trigger" id="typeFilterButton" type="button" aria-expanded="false">전체</button>
               <div class="filter-popover" id="typeFilterPopover" hidden></div>
@@ -576,9 +664,9 @@
           </div>
         </article>
         <article class="section student-results-card">
-          <h2>검색 결과</h2>
+          <h2>사례 검색 결과</h2>
           <div class="table-actions">
-            <h3>결과 테이블</h3>
+            <h3>졸업생 진학 결과</h3>
             <button class="primary" id="csvButton" type="button">CSV 다운로드</button>
           </div>
           <div class="table-wrap">
@@ -586,8 +674,8 @@
           </div>
         </article>
       </div>
-      <aside class="section student-panel">
-        <h2>학생별 조회</h2>
+      <aside class="section student-panel" id="studentDetailPanel">
+        <h2>졸업생 상세</h2>
         <div class="controls" style="grid-template-columns:1fr">
           <label>익명 ID
             <select id="studentSelect"></select>
@@ -602,7 +690,7 @@
     <div class="student-modal-dialog">
       <div class="student-modal-header">
         <div>
-          <h2 class="student-modal-title" id="studentModalTitle">학생 합격여부</h2>
+          <h2 class="student-modal-title" id="studentModalTitle">졸업생 진학 결과</h2>
           <div class="student-modal-subtitle" id="studentModalSubtitle"></div>
         </div>
         <button class="student-modal-close" id="studentModalClose" type="button" aria-label="닫기">×</button>
@@ -613,6 +701,8 @@
 
   <script>
     let DATA = JSON.parse(document.getElementById('data-json').textContent);
+    let COMMENT_LOOKUPS = [];
+    let COMMENT_FILES = [];
     const PASS = '합격';
     const FAIL = '불합격';
     const OTHER = '기타/미정';
@@ -646,6 +736,7 @@
       tableRows: []
     };
     const charts = {};
+    let searchInputTimer = null;
 
     const $ = (id) => document.getElementById(id);
     const clean = (value) => value === null || value === undefined ? '' : String(value);
@@ -664,6 +755,23 @@
 
     function escapeHtml(value) {
       return clean(value).replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function rebuildSearchIndex(data = DATA) {
+      (data.rows || []).forEach(row => {
+        const joined = Object.entries(row)
+          .filter(([key]) => !key.startsWith('__'))
+          .map(([, value]) => clean(value).toLowerCase())
+          .join(' ');
+        row.__searchText = joined;
+        row.__searchCompact = compactText(joined).toLowerCase();
+        row.__univCompact = compactText(row.univ).toLowerCase();
+      });
+    }
+
+    function scheduleRefreshAll(delay = 180) {
+      window.clearTimeout(searchInputTimer);
+      searchInputTimer = window.setTimeout(refreshAll, delay);
     }
 
     function computeMetrics(rows) {
@@ -695,11 +803,15 @@
       if (state.univ) rows = rows.filter(row => row.univ === state.univ);
       else if (state.univQuery.trim()) {
         const univQuery = compactText(state.univQuery).toLowerCase();
-        rows = rows.filter(row => compactText(row.univ).toLowerCase().includes(univQuery));
+        rows = rows.filter(row => (row.__univCompact || compactText(row.univ).toLowerCase()).includes(univQuery));
       }
       const keyword = state.keyword.trim().toLowerCase();
       if (keyword) {
-        rows = rows.filter(row => Object.values(row).some(value => clean(value).toLowerCase().includes(keyword)));
+        const terms = keyword.split(/\s+/).filter(Boolean);
+        rows = rows.filter(row => terms.every(term => {
+          const compactTerm = compactText(term).toLowerCase();
+          return (row.__searchText || '').includes(term) || (compactTerm && (row.__searchCompact || '').includes(compactTerm));
+        }));
       }
       const gpaMin = Number(state.gpaMin);
       const gpaMax = Number(state.gpaMax);
@@ -719,11 +831,11 @@
       return rows;
     }
 
-    function tableFilteredRows() {
-      let rows = searchFilteredRows();
+    function tableFilteredRows(baseRows = null) {
+      let rows = baseRows || searchFilteredRows();
       if (state.regionValues.size) rows = rows.filter(row => state.regionValues.has(getUnivRegion(row.univ)));
       if (state.resultValues.size) rows = rows.filter(row => state.resultValues.has(clean(row.final_result || row.category)));
-      if (state.typeValues.size) rows = rows.filter(row => state.typeValues.has(clean(row.type_name)));
+      if (state.typeValues.size) rows = rows.filter(row => state.typeValues.has(admissionTypeGroup(row)));
       if (state.sortKey) {
         rows = sortRows(rows, state.sortKey, state.sortDir);
       }
@@ -801,7 +913,7 @@
         state.univQuery = event.target.value;
         state.univ = '';
         renderUnivSelect();
-        refreshAll();
+        scheduleRefreshAll();
       });
       $('univSelect').addEventListener('change', (event) => {
         state.univ = event.target.value;
@@ -809,7 +921,7 @@
       });
       $('keywordInput').addEventListener('input', (event) => {
         state.keyword = event.target.value;
-        refreshAll();
+        scheduleRefreshAll();
       });
       $('gpaMinInput').addEventListener('input', (event) => {
         state.gpaMin = event.target.value;
@@ -826,7 +938,16 @@
       $('htmlDownloadButton').addEventListener('click', downloadCurrentHtml);
       $('bookmarkButton').addEventListener('click', showBookmarkGuide);
       $('studentSelect').addEventListener('change', renderStudent);
-      $('excelInput').addEventListener('change', handleExcelUpload);
+      $('excelInput').addEventListener('change', updateUploadSelectionStatus);
+      $('commentInput').addEventListener('change', (event) => {
+        if (DATA.rows.length) handleCommentUpload(event);
+        else updateUploadSelectionStatus();
+      });
+      $('startUploadButton').addEventListener('click', handleExcelUpload);
+      $('uploadToggleButton').addEventListener('click', () => {
+        const collapsed = $('uploadPanel').classList.contains('is-collapsed');
+        setUploadCollapsed(!collapsed);
+      });
     }
 
     function showBookmarkGuide() {
@@ -842,17 +963,25 @@
       return `${selected[0]} 외 ${selected.length - 1}개`;
     }
 
+    function admissionTypeGroup(row) {
+      const source = compactText([row.type_group, row.type_name, row.type_detail].map(clean).join(' '));
+      if (source.includes('종합')) return '학생부종합';
+      if (source.includes('교과')) return '학생부교과';
+      if (source.includes('논술')) return '논술';
+      return '기타';
+    }
+
     function filterValuesForKind(kind, rows) {
       if (kind === 'region') return uniq(rows.map(row => getUnivRegion(row.univ)));
       if (kind === 'result') return uniq(rows.map(row => row.final_result || row.category));
-      if (kind === 'type') return uniq(rows.map(row => row.type_name));
+      if (kind === 'type') return ['학생부종합', '학생부교과', '논술', '기타'].filter(value => rows.some(row => admissionTypeGroup(row) === value));
       return [];
     }
 
     function filterFallbackForKind(kind) {
       if (kind === 'region') return '지역 없음';
       if (kind === 'result') return '결과 없음';
-      if (kind === 'type') return '전형명 없음';
+      if (kind === 'type') return '전형 구분 없음';
       return '항목 없음';
     }
 
@@ -890,8 +1019,8 @@
         if (!input) return;
         if (input.checked) selectedSet.add(input.value);
         else selectedSet.delete(input.value);
-        refreshTableOnly();
-        const searchedRows = searchFilteredRows();
+        const searchedRows = state.filteredRows || searchFilteredRows();
+        refreshTableOnly(searchedRows);
         button.textContent = filterButtonText(filterValuesForKind(kind, searchedRows), selectedSet, filterFallbackForKind(kind));
       });
       document.addEventListener('click', (event) => {
@@ -1068,7 +1197,7 @@
       detail.hidden = false;
       const detailPanel = detail.querySelector('.analysis-collapse');
       if (detailPanel) detailPanel.open = true;
-      $('top15DetailTitle').textContent = `${univ} 지원 학생`;
+      $('top15DetailTitle').textContent = `${univ} 지원 졸업생`;
       $('top15DetailCount').textContent = `${univRows.length.toLocaleString('ko-KR')}건`;
       const columns = [
         ['year', '학년'],
@@ -1142,7 +1271,7 @@
                 },
                 afterBody: items => {
                   const item = items[0] ? items[0].chart.data.labels[items[0].dataIndex] : '';
-                  return item ? `클릭하면 ${item} 학생 목록을 봅니다.` : '';
+                  return item ? `클릭하면 ${item} 졸업생 목록을 봅니다.` : '';
                 }
               }
             }
@@ -1238,7 +1367,7 @@
       detail.hidden = false;
       const detailPanel = detail.querySelector('.analysis-collapse');
       if (detailPanel) detailPanel.open = true;
-      $('trackDetailTitle').textContent = `${track} 지원 학생`;
+      $('trackDetailTitle').textContent = `${track} 지원 졸업생`;
       $('trackDetailCount').textContent = `${trackRows.length.toLocaleString('ko-KR')}건`;
       const columns = [
         ['year', '학년'],
@@ -1310,7 +1439,7 @@
                 },
                 afterBody: items => {
                   const item = chartItems[items[0].dataIndex];
-                  return item ? `클릭하면 ${item.track} 학생 목록을 봅니다.` : '';
+                  return item ? `클릭하면 ${item.track} 졸업생 목록을 봅니다.` : '';
                 }
               }
             }
@@ -1459,6 +1588,7 @@
         return clean(b.year).localeCompare(clean(a.year), 'ko') || (order[a.category] ?? 9) - (order[b.category] ?? 9) || clean(a.univ).localeCompare(clean(b.univ), 'ko');
       };
       const popupRows = sortRows(rows, '', 1, defaultCompare);
+      const comments = uniq(rows.map(row => clean(row.comment)).filter(Boolean));
       const columns = [
         ['year', '학년'],
         ['univ', '대학'],
@@ -1469,7 +1599,7 @@
         ['final_result', '최종'],
         ['category', '합격분류']
       ];
-      $('studentModalTitle').textContent = `${selected} 합격여부`;
+      $('studentModalTitle').textContent = `${selected} 진학 결과`;
       $('studentModalSubtitle').textContent = `${years.join(', ') || '연도 미상'} · 지원 ${rows.length.toLocaleString('ko-KR')}건`;
       $('studentModalBody').innerHTML = `
         <div class="student-modal-kpis">
@@ -1478,6 +1608,7 @@
           <div class="student-kpi"><div class="student-kpi-label">불합격</div><div class="student-kpi-value" style="color:${COLORS.fail}">${failedCount.toLocaleString('ko-KR')}건</div></div>
           <div class="student-kpi"><div class="student-kpi-label">기타</div><div class="student-kpi-value">${otherCount.toLocaleString('ko-KR')}건</div></div>
         </div>
+        ${comments.length ? `<div class="student-comment"><div class="student-comment-title">참고 코멘트</div><div class="student-comment-body">${comments.map(escapeHtml).join('<br>')}</div></div>` : ''}
         <div class="table-wrap student-modal-table-wrap">
           <table class="student-modal-table">
             <thead><tr>${columns.map(([, label]) => `<th>${escapeHtml(label)}</th>`).join('')}</tr></thead>
@@ -1513,12 +1644,12 @@
       const selected = $('studentSelect').value;
       const target = $('studentDetail');
       if (!selected) {
-        target.innerHTML = '<div class="empty">선택된 학생이 없습니다.</div>';
+        target.innerHTML = '<div class="empty">선택된 졸업생이 없습니다.</div>';
         return;
       }
       const rows = DATA.rows.filter(row => row.anon_id === selected);
       if (!rows.length) {
-        target.innerHTML = '<div class="empty">학생 데이터가 없습니다.</div>';
+        target.innerHTML = '<div class="empty">졸업생 데이터가 없습니다.</div>';
         return;
       }
       const first = rows[0];
@@ -1528,6 +1659,7 @@
       const otherCount = rows.length - passedCount - failedCount;
       const gradeTiles = DATA.grade_keys.map(key => [key, first[key] || '-']);
       const suneung = DATA.suneung_items[selected]?.length ? DATA.suneung_items[selected] : [['수능', '-']];
+      const comments = uniq(rows.map(row => clean(row.comment)).filter(Boolean));
       const tile = ([label, value]) => `<div class="summary-tile"><div class="summary-label">${escapeHtml(label)}</div><div class="summary-value">${escapeHtml(value)}</div></div>`;
       const suneungTile = ([label, value]) => `<div class="suneung-row"><div class="suneung-label">${escapeHtml(label)}</div><div class="suneung-value">${escapeHtml(value)}</div></div>`;
       const studentSortOptions = [
@@ -1576,14 +1708,15 @@
             <div class="summary-section"><div class="score-section-title">내신</div><div class="summary-grid">${gradeTiles.map(tile).join('')}</div></div>
             <div class="summary-section summary-section-suneung"><div class="score-section-title">수능</div><div class="suneung-grid">${suneung.map(suneungTile).join('')}</div></div>
           </div>
+          ${comments.length ? `<div class="student-comment"><div class="student-comment-title">참고 코멘트</div><div class="student-comment-body">${comments.map(escapeHtml).join('<br>')}</div></div>` : ''}
         </section>
         <div class="application-list-title">
           <div>
-            <h3>지원 목록</h3>
+            <h3>진학 결과</h3>
             <span class="application-list-count">${years.join(', ')} · ${rows.length.toLocaleString('ko-KR')}건</span>
           </div>
           <div class="student-sort-controls">
-            <select id="studentSortSelect" aria-label="지원 목록 정렬 기준">${studentSortOptionHtml}</select>
+            <select id="studentSortSelect" aria-label="진학 결과 정렬 기준">${studentSortOptionHtml}</select>
             <button type="button" id="studentSortDirButton">${state.studentSortDir === 1 ? '오름차순 ▲' : '내림차순 ▼'}</button>
           </div>
         </div>
@@ -1718,8 +1851,9 @@
     function uploadStudentBases(row, cols) {
       const hakbun = clean(row[cols.hakbun]);
       const classNumberName = [row[cols.class], row[cols.number], row[cols.name]].map(clean).join('|');
+      const numberName = [row[cols.number], row[cols.name]].map(clean).join('|');
       const name = clean(row[cols.name]);
-      return [hakbun, classNumberName, name].filter(value => value && value.replace(/\|/g, ''));
+      return [hakbun, classNumberName, numberName, name].filter(value => value && value.replace(/\|/g, ''));
     }
 
     function uploadStudentKey(row, cols, forcedYear = '') {
@@ -1743,12 +1877,12 @@
       const labels = new Map();
       [...keysByYear.keys()].sort().forEach(year => {
         [...keysByYear.get(year)].sort((a, b) => a.localeCompare(b, 'ko')).forEach((key, index) => {
-          labels.set(`${year}|${key}`, `${year} 학생 ${String(index + 1).padStart(3, '0')}`);
+          labels.set(`${year}|${key}`, `${year} 졸업생 ${String(index + 1).padStart(3, '0')}`);
         });
       });
       let unknown = 1;
       return rowKeys.map(rowKey => {
-        if (!rowKey) return `연도미상 학생 미상 ${String(unknown++).padStart(3, '0')}`;
+        if (!rowKey) return `연도미상 졸업생 미상 ${String(unknown++).padStart(3, '0')}`;
         return labels.get(`${rowKey[0]}|${rowKey[1]}`);
       });
     }
@@ -1806,6 +1940,125 @@
         ['탐구2', uploadSuneungGroup(row, headers, tamgu2, true)],
         ['제2외국어', uploadSuneungGroup(row, headers, second, true)]
       ].filter(item => item[1]);
+    }
+
+    function findCommentHeaderIndex(sheetRows) {
+      const keywords = ['학년', '반', '번호', '학번', '이름', '성명', '주요사항', '코멘트'];
+      let bestIndex = 0;
+      let bestScore = -1;
+      sheetRows.slice(0, 30).forEach((row, index) => {
+        const rowText = row.map(compactText).join(' ');
+        const score = keywords.filter(keyword => rowText.includes(compactText(keyword))).length;
+        const nonEmpty = row.filter(value => clean(value)).length;
+        if (score > bestScore || (score === bestScore && nonEmpty > 0 && index < bestIndex)) {
+          bestIndex = index;
+          bestScore = score;
+        }
+      });
+      return bestIndex;
+    }
+
+    function uploadCommentColumnMap(headers) {
+      return {
+        year: findUploadColumn(headers, ['학년'], true),
+        class: findUploadColumn(headers, ['반'], true),
+        number: findUploadColumn(headers, ['번호'], true),
+        hakbun: findUploadColumn(headers, ['학번', '수험번호']),
+        name: findUploadColumn(headers, ['이름', '성명']),
+        comment: findUploadColumn(headers, ['주요사항', '학생코멘트', '학년코멘트', '코멘트', '특이사항', '비고'])
+      };
+    }
+
+    function classFromSheetName(sheetName) {
+      const match = clean(sheetName).match(/(?:^|\D)\d+\D+(\d+)(?:\D|$)/);
+      return match ? clean(match[1]) : '';
+    }
+
+    function commentRecordsFromWorkbook(workbook) {
+      const records = [];
+      workbook.SheetNames.forEach(sheetName => {
+        const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+        if (!sheetRows.some(row => row.some(value => clean(value)))) return;
+        const headerIndex = findCommentHeaderIndex(sheetRows);
+        const headers = makeUniqueHeaders(sheetRows[headerIndex] || []);
+        const cols = uploadCommentColumnMap(headers);
+        if (!cols.name || !cols.comment) return;
+        sheetRows.slice(headerIndex + 1).forEach(row => {
+          const source = {};
+          headers.forEach((header, index) => source[header] = clean(row[index]).trim());
+          const name = clean(source[cols.name]);
+          const comment = clean(source[cols.comment]);
+          if (!name || !comment) return;
+          records.push({
+            hakbun: clean(source[cols.hakbun]),
+            classNo: clean(source[cols.class]) || classFromSheetName(sheetName),
+            number: clean(source[cols.number]),
+            name,
+            comment
+          });
+        });
+      });
+      return records;
+    }
+
+    function buildCommentLookup(records) {
+      const byExact = new Map();
+      const byName = new Map();
+      function addExact(key, comment) {
+        if (!key) return;
+        if (!byExact.has(key)) byExact.set(key, []);
+        byExact.get(key).push(comment);
+      }
+      records.forEach(record => {
+        addExact(clean(record.hakbun), record.comment);
+        if (record.classNo && record.number && record.name) addExact(`${record.classNo}|${record.number}|${record.name}`, record.comment);
+        if (record.number && record.name) addExact(`${record.number}|${record.name}`, record.comment);
+        if (!byName.has(record.name)) byName.set(record.name, []);
+        byName.get(record.name).push(record.comment);
+      });
+
+      const lookup = new Map();
+      for (const [key, comments] of byExact.entries()) {
+        const uniqueComments = uniq(comments.map(clean).filter(Boolean));
+        if (uniqueComments.length) lookup.set(key, uniqueComments);
+      }
+      for (const [name, comments] of byName.entries()) {
+        const uniqueComments = uniq(comments.map(clean).filter(Boolean));
+        if (records.filter(record => record.name === name).length === uniqueComments.length && uniqueComments.length === 1) {
+          lookup.set(name, uniqueComments);
+        }
+      }
+      return lookup;
+    }
+
+    function applyCommentLookups(data, lookups = COMMENT_LOOKUPS, commentFiles = COMMENT_FILES) {
+      if (!lookups.length || !data.rows.length) return 0;
+      const byAnon = new Map();
+      for (const [anonId, info] of Object.entries(data.match_keys || {})) {
+        const bases = info.bases || [];
+        for (const lookup of lookups) {
+          for (const base of bases) {
+            const comments = lookup.get(clean(base));
+            if (comments && comments.length) {
+              byAnon.set(anonId, comments.join('\n'));
+              break;
+            }
+          }
+          if (byAnon.has(anonId)) break;
+        }
+      }
+      let matchedRows = 0;
+      data.rows = data.rows.map(row => {
+        const comment = byAnon.get(row.anon_id);
+        if (!comment) return row;
+        matchedRows += 1;
+        return { ...row, comment };
+      });
+      data.metadata = {
+        ...(data.metadata || {}),
+        comment_file: uniq([clean(data.metadata?.comment_file), ...commentFiles].filter(Boolean)).join(', ')
+      };
+      return matchedRows;
     }
 
     function payloadFromWorkbook(workbook, fileName) {
@@ -1893,7 +2146,7 @@
         const labelYear = year || '연도미상';
         const count = (counters.get(labelYear) || 0) + 1;
         counters.set(labelYear, count);
-        return `${labelYear} 학생 ${String(count).padStart(3, '0')}`;
+        return `${labelYear} 졸업생 ${String(count).padStart(3, '0')}`;
       }
 
       for (const payload of payloads) {
@@ -1967,7 +2220,7 @@
         const labelYear = year || '연도미상';
         const count = (counters.get(labelYear) || 0) + 1;
         counters.set(labelYear, count);
-        return `${labelYear} 학생 ${String(count).padStart(3, '0')}`;
+        return `${labelYear} 졸업생 ${String(count).padStart(3, '0')}`;
       }
 
       for (const payload of payloads) {
@@ -2050,26 +2303,80 @@
       $('univSelect').value = '';
     }
 
-    async function handleExcelUpload(event) {
-      const files = [...(event.target.files || [])];
+    function updateUploadSelectionStatus() {
+      const resultCount = $('excelInput') ? $('excelInput').files.length : 0;
+      const commentCount = $('commentInput') ? $('commentInput').files.length : 0;
+      const parts = [];
+      if (resultCount) parts.push(`결과 ${resultCount.toLocaleString('ko-KR')}개`);
+      if (commentCount) parts.push(`코멘트 ${commentCount.toLocaleString('ko-KR')}개`);
+      $('uploadStatus').textContent = parts.length ? `${parts.join(' · ')} 선택됨 · 시각화 시작을 누르세요.` : '결과 엑셀과 코멘트 엑셀을 선택한 뒤 시작합니다.';
+    }
+
+    function setUploadCollapsed(collapsed) {
+      const panel = $('uploadPanel');
+      if (!panel) return;
+      if (!DATA.rows.length) collapsed = false;
+      panel.classList.toggle('is-collapsed', collapsed);
+      const button = $('uploadToggleButton');
+      if (button) {
+        button.textContent = collapsed ? '펼치기' : '접기';
+        button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+      const meta = $('uploadSummaryMeta');
+      if (meta) {
+        const rowCount = DATA.rows.length.toLocaleString('ko-KR');
+        const commentCount = DATA.rows.filter(row => clean(row.comment)).length.toLocaleString('ko-KR');
+        meta.textContent = `${rowCount}건 불러옴 · 코멘트 ${commentCount}건`;
+      }
+    }
+
+    async function readCommentFiles(files) {
+      const newLookups = [];
+      const newFileNames = [];
+      let recordCount = 0;
+      for (const file of files) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const records = commentRecordsFromWorkbook(workbook);
+        recordCount += records.length;
+        if (records.length) {
+          newLookups.push(buildCommentLookup(records));
+          newFileNames.push(file.name);
+        }
+      }
+      COMMENT_LOOKUPS = COMMENT_LOOKUPS.concat(newLookups);
+      COMMENT_FILES = uniq(COMMENT_FILES.concat(newFileNames));
+      return recordCount;
+    }
+
+    async function handleExcelUpload() {
+      const files = [...($('excelInput').files || [])];
+      const commentFiles = [...($('commentInput').files || [])];
       if (!files.length) return;
       if (!window.XLSX) {
         $('uploadStatus').textContent = '엑셀 읽기 라이브러리를 불러오지 못했습니다.';
         return;
       }
-      $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 엑셀을 읽는 중입니다.`;
+      $('uploadStatus').textContent = '선택한 엑셀 파일을 읽는 중입니다.';
       try {
         const payloads = [];
         const beforeCount = DATA.rows.length;
+        COMMENT_LOOKUPS = [];
+        COMMENT_FILES = [];
+        const commentRecordCount = commentFiles.length ? await readCommentFiles(commentFiles) : 0;
         for (const file of files) {
           const buffer = await file.arrayBuffer();
           const workbook = XLSX.read(buffer, { type: 'array' });
           payloads.push(payloadFromWorkbook(workbook, file.name));
         }
         DATA = appendPayloads(payloads);
+        const matchedCommentRows = applyCommentLookups(DATA);
+        rebuildSearchIndex(DATA);
         resetStateForData();
         const addedCount = DATA.rows.length - beforeCount;
-        $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 파일 추가 · ${addedCount.toLocaleString('ko-KR')}건 추가 · 총 ${DATA.rows.length.toLocaleString('ko-KR')}건`;
+        const commentText = commentRecordCount ? ` · 코멘트 ${commentRecordCount.toLocaleString('ko-KR')}명 읽음 · ${matchedCommentRows.toLocaleString('ko-KR')}건 매칭` : '';
+        $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 결과 파일 추가 · ${addedCount.toLocaleString('ko-KR')}건 추가 · 총 ${DATA.rows.length.toLocaleString('ko-KR')}건${commentText}`;
+        setUploadCollapsed(true);
         renderYearButtons();
         renderUnivSuggestions();
         renderUnivSelect();
@@ -2077,6 +2384,27 @@
       } catch (error) {
         console.error(error);
         $('uploadStatus').textContent = '엑셀 파일을 읽지 못했습니다.';
+      }
+    }
+
+    async function handleCommentUpload(event) {
+      const files = [...(event.target.files || [])];
+      if (!files.length) return;
+      if (!window.XLSX) {
+        $('uploadStatus').textContent = '엑셀 읽기 라이브러리를 불러오지 못했습니다.';
+        return;
+      }
+      $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 코멘트 엑셀을 읽는 중입니다.`;
+      try {
+        const recordCount = await readCommentFiles(files);
+        const matchedRows = applyCommentLookups(DATA);
+        rebuildSearchIndex(DATA);
+        refreshAll();
+        setUploadCollapsed(true);
+        $('uploadStatus').textContent = `${files.length.toLocaleString('ko-KR')}개 코멘트 파일 · ${recordCount.toLocaleString('ko-KR')}명 코멘트 읽음 · ${matchedRows.toLocaleString('ko-KR')}건 매칭`;
+      } catch (error) {
+        console.error(error);
+        $('uploadStatus').textContent = '코멘트 엑셀 파일을 읽지 못했습니다.';
       }
     }
 
@@ -2109,8 +2437,8 @@
       URL.revokeObjectURL(url);
     }
 
-    function refreshTableOnly() {
-      const tableRows = tableFilteredRows();
+    function refreshTableOnly(baseRows = null) {
+      const tableRows = tableFilteredRows(baseRows);
       renderTable(tableRows);
       renderMetrics('searchMetrics', tableRows);
       renderGpaChart(tableRows);
@@ -2127,7 +2455,7 @@
       renderTrackDashboard(yearRows);
       const searchedRows = searchFilteredRows();
       syncFilterPanels(searchedRows);
-      refreshTableOnly();
+      refreshTableOnly(searchedRows);
     }
 
     function bindOverviewTabs() {
@@ -2149,6 +2477,25 @@
       Object.values(charts).forEach(chart => chart.resize());
     }
 
+    function bindCaseNavigation() {
+      document.querySelectorAll('[data-case-target]').forEach(button => {
+        button.addEventListener('click', () => {
+          const view = button.dataset.caseView;
+          const tab = button.dataset.caseTab;
+          const targetId = button.dataset.caseTarget;
+          if (view) activateView(view);
+          if (targetId === 'uploadPanel') setUploadCollapsed(false);
+          if (tab) {
+            const tabButton = document.querySelector(`[data-overview-tab="${tab}"]`);
+            if (tabButton) tabButton.click();
+          }
+          document.querySelectorAll('[data-case-target]').forEach(item => item.classList.toggle('active', item === button));
+          const target = $(targetId);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    }
+
     function bindViewMenu() {
       document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', () => {
@@ -2160,12 +2507,15 @@
     function init() {
       const meta = DATA.metadata || {};
       const rowCount = Number(meta.row_count || 0);
-      setText($('metadata'), rowCount ? `${meta.result_file || ''} · ${rowCount.toLocaleString('ko-KR')}건 · ${meta.created_at || ''}` : '엑셀 파일을 넣어 진학 결과를 시각화합니다.');
+      setText($('metadata'), rowCount ? `${meta.result_file || ''} · ${rowCount.toLocaleString('ko-KR')}건 · ${meta.created_at || ''}` : '졸업생 진학결과 엑셀을 넣어 사례를 탐색합니다.');
+      rebuildSearchIndex(DATA);
       bindViewMenu();
       bindOverviewTabs();
+      bindCaseNavigation();
       bindStudentPopup();
       renderYearButtons();
       renderSelects();
+      setUploadCollapsed(rowCount > 0);
       refreshAll();
     }
 
