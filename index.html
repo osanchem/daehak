@@ -1808,8 +1808,8 @@
     function uploadCategory(value) {
       const valueText = compactText(value);
       if (!valueText) return OTHER;
-      if (valueText === 'X' || valueText.includes('불합') || valueText.includes('탈락') || valueText.includes('미달')) return FAIL;
-      if (valueText === 'O' || valueText.includes('합격') || valueText.includes('충원') || valueText.includes('등록')) return PASS;
+      if (['X', 'x', '불'].includes(valueText) || valueText.includes('불합') || valueText.includes('탈락') || valueText.includes('미달')) return FAIL;
+      if (['O', 'o', '합'].includes(valueText) || valueText.includes('합격') || valueText.includes('충원') || valueText.includes('등록')) return PASS;
       if (valueText.includes('예비')) return OTHER;
       return OTHER;
     }
