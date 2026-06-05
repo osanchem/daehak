@@ -1743,7 +1743,7 @@
     }
 
     function findHeaderIndex(sheetRows) {
-      const keywords = ['학년', '이름', '대학', '대학명', '모집단위', '최종', '최종단계'];
+      const keywords = ['학년', '이름', '대학', '대학명', '지원대학', '학교명', '모집단위', '학과명', '전형명', '최종', '최종단계', '최종결과', '합불', '합격여부', '결과'];
       let bestIndex = 0;
       let bestScore = -1;
       sheetRows.slice(0, 30).forEach((row, index) => {
@@ -1789,17 +1789,17 @@
         number: findUploadColumn(headers, ['번호'], true),
         hakbun: findUploadColumn(headers, ['학번', '수험번호']),
         name: findUploadColumn(headers, ['이름', '성명']),
-        univ: findUploadColumn(headers, ['대학명', '대학']),
-        period: findUploadColumn(headers, ['모집시기', '지원시기']),
+        univ: findUploadColumn(headers, ['대학명', '대학', '지원대학', '학교명']),
+        period: findUploadColumn(headers, ['모집시기', '지원시기', '모집구분', '시기']),
         type_group: findUploadColumn(headers, ['전형유형']),
         type_name: findUploadColumn(headers, ['전형', '전형명']),
         type_detail: findUploadColumn(headers, ['세부유형', '세부전형']),
-        dept: findUploadColumn(headers, ['모집단위', '학과', '전공']),
+        dept: findUploadColumn(headers, ['모집단위', '학과명', '학과', '전공', '학부']),
         first_result: findUploadColumn(headers, ['1단계']),
-        final_result: findUploadColumn(headers, ['최종단계', '최종']),
+        final_result: findUploadColumn(headers, ['최종단계', '최종결과', '최종', '합불', '합격여부', '결과']),
         wait: findUploadColumn(headers, ['후보순위', '예비', '후보']),
-        register: findUploadColumn(headers, ['등록여부', '등록']),
-        gpa: findUploadColumn(headers, ['전교과', '전과목']),
+        register: findUploadColumn(headers, ['등록여부', '등록구분', '등록']),
+        gpa: findUploadColumn(headers, ['전교과', '전과목', '내신', '평균등급']),
         gpa_core: findUploadColumn(headers, ['국영수사/과', '국수영사/과', '국영수사과', '국수영사과', '국수영사']),
         comment: findUploadColumn(headers, ['학생코멘트', '학년코멘트', '주요사항'])
       };
@@ -2061,10 +2061,10 @@
       return matchedRows;
     }
 
-    function payloadFromWorkbook(workbook, fileName) {
+    function payloadFromSheet(workbook, sheetName, fileName) {
       const fileYear = uploadYearFromFile(fileName);
-      const sheetName = workbook.SheetNames.find(name => XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: '' }).some(row => row.some(value => clean(value)))) || workbook.SheetNames[0];
       const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+      if (!sheetRows.some(row => row.some(value => clean(value)))) return null;
       const headerIndex = findHeaderIndex(sheetRows);
       const headers = makeUniqueHeaders(sheetRows[headerIndex] || []);
       const objects = sheetRows.slice(headerIndex + 1).map(row => {
@@ -2073,8 +2073,10 @@
         return item;
       }).filter(row => Object.values(row).some(value => clean(value)));
       const cols = uploadColumnMap(headers);
+      if (!cols.univ) return null;
       const signal = [cols.univ, cols.dept, cols.type_name, cols.first_result, cols.final_result].filter(Boolean);
       const sourceRows = signal.length ? objects.filter(row => signal.some(col => clean(row[col]))) : objects;
+      if (!sourceRows.length) return null;
       const anonIds = buildAnonIds(sourceRows, cols, fileYear);
       const grades = uploadGradeColumns(headers);
       const privateCols = new Set([cols.name, cols.hakbun, cols.class, cols.number].filter(Boolean));
@@ -2126,12 +2128,38 @@
         suneung_items: suneungItems,
         match_keys: matchKeys,
         metadata: {
-          result_file: fileName,
+          result_file: `${fileName}:${sheetName}`,
           row_count: rows.length,
           created_at: new Date().toLocaleString('ko-KR')
         },
         colors: DATA.colors || { pass: COLORS.pass, fail: COLORS.fail, other: COLORS.other }
       };
+    }
+
+    function payloadFromWorkbook(workbook, fileName) {
+      const payloads = workbook.SheetNames
+        .map(sheetName => payloadFromSheet(workbook, sheetName, fileName))
+        .filter(Boolean);
+      if (!payloads.length) {
+        return {
+          rows: [],
+          years: [],
+          univs: [],
+          students: [],
+          grade_keys: [],
+          suneung_items: {},
+          match_keys: {},
+          metadata: {
+            result_file: fileName,
+            row_count: 0,
+            created_at: new Date().toLocaleString('ko-KR')
+          },
+          colors: DATA.colors || { pass: COLORS.pass, fail: COLORS.fail, other: COLORS.other }
+        };
+      }
+      const merged = mergePayloads(payloads);
+      merged.metadata.result_file = fileName;
+      return merged;
     }
 
     function mergePayloads(payloads) {
