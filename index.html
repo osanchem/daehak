@@ -610,7 +610,10 @@
 
     <section class="view-panel student-view" data-view-panel="student">
       <article class="section student-search-card" id="studentSearchCard">
-        <h2>사례 탐색</h2>
+        <div class="table-actions" style="margin-top:0">
+          <h2>사례 탐색</h2>
+          <button class="secondary" id="resetSearchButton" type="button">검색 초기화</button>
+        </div>
         <div class="controls">
           <label>대학명 검색
             <input id="univSearchInput" type="search" list="univSuggestions" placeholder="대학명 일부 입력">
@@ -776,6 +779,11 @@
       searchInputTimer = window.setTimeout(refreshAll, delay);
     }
 
+    function scheduleRefreshSearch(delay = 160) {
+      window.clearTimeout(searchInputTimer);
+      searchInputTimer = window.setTimeout(refreshSearch, delay);
+    }
+
     function computeMetrics(rows) {
       const total = rows.length;
       const passed = rows.filter(r => r.category === PASS).length;
@@ -915,28 +923,29 @@
         state.univQuery = event.target.value;
         state.univ = '';
         renderUnivSelect();
-        scheduleRefreshAll();
+        scheduleRefreshSearch();
       });
       $('univSelect').addEventListener('change', (event) => {
         state.univ = event.target.value;
-        refreshAll();
+        refreshSearch();
       });
       $('keywordInput').addEventListener('input', (event) => {
         state.keyword = event.target.value;
-        scheduleRefreshAll();
+        scheduleRefreshSearch();
       });
       $('gpaMinInput').addEventListener('input', (event) => {
         state.gpaMin = event.target.value;
-        refreshAll();
+        scheduleRefreshSearch();
       });
       $('gpaMaxInput').addEventListener('input', (event) => {
         state.gpaMax = event.target.value;
-        refreshAll();
+        scheduleRefreshSearch();
       });
       bindFilterDropdown('region', 'regionFilterButton', 'regionFilterPopover', state.regionValues);
       bindFilterDropdown('result', 'resultFilterButton', 'resultFilterPopover', state.resultValues);
       bindFilterDropdown('type', 'typeFilterButton', 'typeFilterPopover', state.typeValues);
       $('csvButton').addEventListener('click', downloadCsv);
+      $('resetSearchButton').addEventListener('click', resetSearch);
       $('htmlDownloadButton').addEventListener('click', downloadCurrentHtml);
       $('bookmarkButton').addEventListener('click', showBookmarkGuide);
       $('studentSelect').addEventListener('change', renderStudent);
@@ -2527,7 +2536,7 @@
       updateStudentOptions(tableRows);
     }
 
-    function refreshAll() {
+    function refreshOverview() {
       document.body.classList.toggle('empty-mode', DATA.rows.length === 0);
       const yearRows = yearFilteredRows();
       renderMetrics('overallMetrics', yearRows);
@@ -2535,9 +2544,37 @@
       renderTop15Dashboard(yearRows);
       renderRegionDashboard(yearRows);
       renderTrackDashboard(yearRows);
+    }
+
+    function refreshSearch() {
       const searchedRows = searchFilteredRows();
       syncFilterPanels(searchedRows);
       refreshTableOnly(searchedRows);
+    }
+
+    function refreshAll() {
+      refreshOverview();
+      refreshSearch();
+    }
+
+    function resetSearch() {
+      state.univ = '';
+      state.univQuery = '';
+      state.keyword = '';
+      state.gpaMin = '';
+      state.gpaMax = '';
+      state.regionValues.clear();
+      state.resultValues.clear();
+      state.typeValues.clear();
+      state.sortKey = '';
+      state.sortDir = 1;
+      $('univSearchInput').value = '';
+      $('keywordInput').value = '';
+      $('gpaMinInput').value = '';
+      $('gpaMaxInput').value = '';
+      $('univSelect').value = '';
+      renderUnivSelect();
+      refreshSearch();
     }
 
     function bindOverviewTabs() {
