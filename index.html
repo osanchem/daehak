@@ -435,7 +435,8 @@
     .empty { color: var(--apple-muted); padding: 18px 0; }
     @media (max-width: 1180px) {
       .page { padding: 24px 14px 48px; }
-      header, .grid, .charts, .controls, .filter-row, .upload-panel { grid-template-columns: 1fr; display: grid; }
+      header, .grid, .charts, .controls, .upload-panel { grid-template-columns: 1fr; display: grid; }
+      .filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       header { align-items: stretch; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .view-menu { grid-template-columns: 1fr; }
@@ -452,8 +453,14 @@
       .local-download { align-items: flex-start; }
     }
     @media (max-width: 560px) {
-      .metrics, .summary-sections, .summary-grid, .student-kpis, .student-modal-kpis { grid-template-columns: 1fr; }
-      table { min-width: 720px; }
+      .page { padding: 18px 10px 40px; }
+      .metrics, .summary-sections, .summary-grid, .student-kpis, .student-modal-kpis, .filter-row { grid-template-columns: 1fr; }
+      .table-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+      .table-actions button { width: 100%; }
+      .chart-box { height: 300px; }
+      .chart-box canvas { height: 250px !important; max-height: 250px; }
+      select, input:not([type=checkbox]) { min-height: 42px; }
+      table { min-width: 640px; }
     }
   </style>
 </head>
@@ -935,11 +942,11 @@
       });
       $('gpaMinInput').addEventListener('input', (event) => {
         state.gpaMin = event.target.value;
-        scheduleRefreshSearch();
+        scheduleRefreshSearch(300);
       });
       $('gpaMaxInput').addEventListener('input', (event) => {
         state.gpaMax = event.target.value;
-        scheduleRefreshSearch();
+        scheduleRefreshSearch(300);
       });
       bindFilterDropdown('region', 'regionFilterButton', 'regionFilterPopover', state.regionValues);
       bindFilterDropdown('result', 'resultFilterButton', 'resultFilterPopover', state.resultValues);
@@ -1472,21 +1479,27 @@
         const x = Math.max(0, categories.indexOf(row.category));
         return { x: x + ((index % 9) - 4) * 0.025, y: row.gpa, row };
       });
+      const datasets = categories.map((category) => ({
+        label: category,
+        data: points.filter(p => p.row.category === category),
+        backgroundColor: categoryColor(category),
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }));
+      const existingGpa = charts['gpa'];
+      if (existingGpa) {
+        existingGpa.data.datasets = datasets;
+        existingGpa.update('none');
+        return;
+      }
       makeChart('gpa', 'gpaChart', {
         type: 'scatter',
-        data: {
-          datasets: categories.map((category) => ({
-            label: category,
-            data: points.filter(p => p.row.category === category),
-            backgroundColor: categoryColor(category),
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }))
-        },
+        data: { datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           resizeDelay: 120,
+          animation: false,
           onClick: (event, elements, chart) => {
             if (!elements.length) return;
             const element = elements[0];
